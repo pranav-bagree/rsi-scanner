@@ -6,6 +6,15 @@ name: 4h RSI scan (hourly)
 # an Anthropic API key available in CI.
 
 on:
+  # Auto-rebuild whenever main is updated so config/code changes land on the
+  # live dashboard immediately rather than waiting for the next cron tick.
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'PROJECT_HANDOFF.md'
+      - '.gitignore'
+      - 'output/**'
   schedule:
     # Hourly during US trading hours, weekdays. Cron is UTC; one entry covers
     # both EDT and EST since 14:05–21:05 UTC spans 10:05–17:05 EDT and
