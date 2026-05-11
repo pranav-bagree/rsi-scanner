@@ -131,6 +131,27 @@ def gather_fundamentals(ticker: str) -> dict:
     return snapshot
 
 
+def fetch_inline_fundamentals(tickers: list[str]) -> dict[str, dict]:
+    """Lightweight per-ticker fetch of the four fields shown in the full scan table.
+
+    Calls yf.Ticker(t).info individually for each ticker. Used only for dashboard
+    display — not for Claude analysis.
+    """
+    result: dict[str, dict] = {}
+    for t in tickers:
+        try:
+            info = yf.Ticker(t).info or {}
+            result[t] = {
+                "market_cap": _safe(info, "marketCap"),
+                "trailing_pe": _safe(info, "trailingPE"),
+                "peg_ratio": _safe(info, "pegRatio") or _safe(info, "trailingPegRatio"),
+                "beta": _safe(info, "beta"),
+            }
+        except Exception:
+            result[t] = {"market_cap": None, "trailing_pe": None, "peg_ratio": None, "beta": None}
+    return result
+
+
 def analyze_deep_dive(
     ticker: str,
     company_name: str,

@@ -25,6 +25,7 @@ sys.path.insert(0, str(ROOT))
 from scripts.fetch_prices import fetch_4h_bars, drop_in_progress_bar
 from scripts.compute_rsi import attach_rsi
 from scripts.render_dashboard import render, md_to_html
+from scripts.deep_dive import fetch_inline_fundamentals
 
 
 def load_yaml(path: Path) -> dict:
@@ -98,13 +99,9 @@ def build_scan_rows(
             }
         )
 
-    # Full scan rows: alphabetical by ticker (table is searchable/scannable).
-    # Hits and watch list are sorted by RSI ascending so the most-oversold sits first
-    # in those panels.
-    all_rows.sort(key=lambda r: r["ticker"])
-    by_rsi = sorted(all_rows, key=lambda r: (r["rsi"] if r["rsi"] is not None else 200))
-    hits = [r for r in by_rsi if r["status"] == "oversold"]
-    watch_list = [r for r in by_rsi if r["status"] == "watch"]
+    all_rows.sort(key=lambda r: (r["rsi"] if r["rsi"] is not None else 200))
+    hits = [r for r in all_rows if r["status"] == "oversold"]
+    watch_list = [r for r in all_rows if r["status"] == "watch"]
     return all_rows, hits, watch_list
 
 
@@ -189,6 +186,9 @@ def main():
         oversold=settings["rsi"]["oversold_threshold"],
         watch=settings["rsi"]["watch_threshold"],
     )
+
+    print(f"      Fetching inline fundamentals ({len(tickers)} tickers)...")
+    inline_fund = fetch_inline_fundamentals(tickers)
 
     # Force hits if requested (test path)
     if args.force_hit:
@@ -289,9 +289,17 @@ def main():
         "watch": rendered_watch,
         "rows": [
             {
-                "ticker": r["ticker"], "company": r["company"], "sector": r["sector"],
-                "price": r["price"], "rsi": r["rsi"],
-                "bar_change_pct": r["bar_change_pct"], "status": r["status"],
+                "ticker": r["ticker"],
+                "company": r["company"],
+                "sector": r["sector"],
+                "price": r["price"],
+                "rsi": r["rsi"],
+                "bar_change_pct": r["bar_change_pct"],
+                "status": r["status"],
+                "market_cap": inline_fund.get(r["ticker"], {}).get("market_cap"),
+                "pe": inline_fund.get(r["ticker"], {}).get("trailing_pe"),
+                "peg": inline_fund.get(r["ticker"], {}).get("peg_ratio"),
+                "beta": inline_fund.get(r["ticker"], {}).get("beta"),
             }
             for r in all_rows
         ],

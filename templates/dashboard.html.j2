@@ -158,44 +158,14 @@
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: 10px; user-select: none;
     color: var(--text-muted); font-size: 14px;
-  }
-  details.full-scan[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
-  .scan-search {
-    background: var(--bg-card);
-    border-left: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    padding: 12px 14px;
     display: flex; align-items: center; gap: 10px;
   }
-  .scan-search input {
-    flex: 1;
-    background: var(--bg-card-soft);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    padding: 9px 12px;
-    font-size: 13.5px;
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.15s, background 0.15s;
-  }
-  .scan-search input:focus { border-color: var(--accent); background: var(--bg-card); }
-  .scan-search input::placeholder { color: var(--text-dim); }
-  .scan-search .visible-count {
-    color: var(--text-muted); font-size: 12px; white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-  }
+  details.full-scan[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
   details.full-scan table {
     width: 100%; border-collapse: collapse;
     background: var(--bg-card); border: 1px solid var(--border); border-top: none;
     border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;
     overflow: hidden;
-  }
-  details.full-scan .empty-search {
-    background: var(--bg-card); border: 1px solid var(--border); border-top: none;
-    border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;
-    padding: 24px; text-align: center; color: var(--text-muted); font-size: 13px;
-    display: none;
   }
   details.full-scan th, details.full-scan td {
     padding: 10px 14px; text-align: left; font-size: 13px;
@@ -208,6 +178,7 @@
     background: var(--bg-card-soft);
   }
   details.full-scan td.numeric { text-align: right; font-variant-numeric: tabular-nums; }
+  details.full-scan th.numeric { text-align: right; }
   details.full-scan td.ticker { font-weight: 600; }
   details.full-scan td.sector { color: var(--text-muted); font-size: 12px; }
   details.full-scan tr.row-oversold td { background: var(--alert-soft); }
@@ -217,6 +188,22 @@
   details.full-scan .rsi-cell.watch { color: var(--warn); font-weight: 500; }
   details.full-scan .change-pos { color: var(--ok); }
   details.full-scan .change-neg { color: var(--alert); }
+
+  /* Collapsible fundamentals columns */
+  .fund-col { display: none; }
+  .show-fundamentals .fund-col { display: table-cell; }
+  .toggle-fund-btn {
+    margin-left: auto;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-card-soft);
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .toggle-fund-btn:hover { color: var(--text); border-color: var(--accent); }
 
   .empty-state {
     background: var(--bg-card); border: 1px solid var(--border);
@@ -240,8 +227,8 @@
     <div>
       <h1>{{ title }}</h1>
       <div class="meta">
-        Scan run <span class="mono">{{ run_ts_human }}</span> ·
-        <span class="mono">{{ universe_size }}</span> tickers ·
+        Scan run <span class="mono">{{ run_ts_human }}</span> &middot;
+        <span class="mono">{{ universe_size }}</span> tickers &middot;
         most recent closed 4h bar: <span class="mono">{{ latest_bar_human }}</span>
       </div>
     </div>
@@ -357,12 +344,11 @@
   <section>
     <h2>Full scan <span class="count">{{ rows|length }}</span></h2>
     <details class="full-scan" {% if not hits %}open{% endif %}>
-      <summary>Show all {{ rows|length }} tickers</summary>
-      <div class="scan-search">
-        <input type="text" id="scan-search-input" placeholder="Filter by ticker, company, or sector..." autocomplete="off" spellcheck="false">
-        <span class="visible-count" id="scan-visible-count">{{ rows|length }} of {{ rows|length }}</span>
-      </div>
-      <table id="scan-table">
+      <summary>
+        Show all {{ rows|length }} tickers
+        <button class="toggle-fund-btn" onclick="toggleFundamentals(event, this)">+ Fundamentals</button>
+      </summary>
+      <table>
         <thead>
           <tr>
             <th>Ticker</th>
@@ -371,11 +357,15 @@
             <th class="numeric">Price</th>
             <th class="numeric">Bar change</th>
             <th class="numeric">RSI(14)</th>
+            <th class="fund-col numeric">Mkt Cap</th>
+            <th class="fund-col numeric">P/E</th>
+            <th class="fund-col numeric">PEG</th>
+            <th class="fund-col numeric">Beta</th>
           </tr>
         </thead>
         <tbody>
           {% for r in rows %}
-            <tr class="{% if r.status == 'oversold' %}row-oversold{% elif r.status == 'watch' %}row-watch{% elif r.status == 'error' %}row-error{% endif %}" data-search="{{ r.ticker|lower }} {{ r.company|lower }} {{ r.sector|lower }}">
+            <tr class="{% if r.status == 'oversold' %}row-oversold{% elif r.status == 'watch' %}row-watch{% elif r.status == 'error' %}row-error{% endif %}">
               <td class="ticker">{{ r.ticker }}</td>
               <td>{{ r.company }}</td>
               <td class="sector">{{ r.sector }}</td>
@@ -388,53 +378,35 @@
                   <span class="rsi-cell {% if r.status == 'oversold' %}oversold{% elif r.status == 'watch' %}watch{% endif %}">{{ "%.2f"|format(r.rsi) }}</span>
                 {% else %}—{% endif %}
               </td>
+              <td class="fund-col numeric">{{ r.market_cap | fmt_market_cap }}</td>
+              <td class="fund-col numeric">{% if r.pe is not none %}{{ "%.1f"|format(r.pe) }}{% else %}—{% endif %}</td>
+              <td class="fund-col numeric">{% if r.peg is not none %}{{ "%.2f"|format(r.peg) }}{% else %}—{% endif %}</td>
+              <td class="fund-col numeric">{% if r.beta is not none %}{{ "%.2f"|format(r.beta) }}{% else %}—{% endif %}</td>
             </tr>
           {% endfor %}
         </tbody>
       </table>
-      <div class="empty-search" id="scan-empty">No tickers match the filter.</div>
     </details>
-    <script>
-      (function() {
-        var input = document.getElementById('scan-search-input');
-        var table = document.getElementById('scan-table');
-        var empty = document.getElementById('scan-empty');
-        var counter = document.getElementById('scan-visible-count');
-        if (!input || !table) return;
-        var rows = table.querySelectorAll('tbody tr');
-        var total = rows.length;
-        input.addEventListener('input', function(e) {
-          var q = e.target.value.toLowerCase().trim();
-          var visible = 0;
-          rows.forEach(function(row) {
-            var hay = row.getAttribute('data-search') || '';
-            var match = !q || hay.indexOf(q) !== -1;
-            row.style.display = match ? '' : 'none';
-            if (match) visible++;
-          });
-          counter.textContent = visible + ' of ' + total;
-          if (empty) empty.style.display = visible === 0 ? 'block' : 'none';
-          if (empty && visible === 0) {
-            table.style.borderBottomLeftRadius = '0';
-            table.style.borderBottomRightRadius = '0';
-          } else if (table) {
-            table.style.borderBottomLeftRadius = '';
-            table.style.borderBottomRightRadius = '';
-          }
-        });
-      })();
-    </script>
   </section>
 
   <footer class="page">
     <div>
-      Generated {{ run_ts_iso }} · Wilder RSI({{ rsi_period }}) on 4h closed bars · TradingView convention (9:30 / 13:30 ET)
+      Generated {{ run_ts_iso }} &middot; Wilder RSI({{ rsi_period }}) on 4h closed bars &middot; TradingView convention (9:30 / 13:30 ET)
     </div>
     <div>
-      Analysis model: <span class="mono">{{ analysis_model or "—" }}</span> · Data: yfinance
+      Analysis model: <span class="mono">{{ analysis_model or "—" }}</span> &middot; Data: yfinance
     </div>
   </footer>
 
 </div>
+<script>
+  function toggleFundamentals(event, btn) {
+    event.preventDefault();
+    event.stopPropagation();
+    var table = btn.closest('details').querySelector('table');
+    var show = table.classList.toggle('show-fundamentals');
+    btn.textContent = show ? '− Fundamentals' : '+ Fundamentals';
+  }
+</script>
 </body>
 </html>
