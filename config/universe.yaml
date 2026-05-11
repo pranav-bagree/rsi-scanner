@@ -1,5 +1,5 @@
 version: 2026-05-11
-description: AI infrastructure universe — 50 tickers across 12 subcategories (alphabetical within subcategory)
+description: Multi-theme universe — 79 tickers across 22 subcategories (AI infrastructure + Fintech + Tech SaaS; alphabetical within subcategory)
 
 sectors:
   AI Compute / GPUs / Accelerators:
@@ -77,3 +77,50 @@ sectors:
   AI EDA & Design Tools:
     - { ticker: CDNS, name: Cadence Design Systems,       note: "Every custom ASIC runs through Cadence tools" }
     - { ticker: SNPS, name: Synopsys,                     note: "Synthesis, verification, IP licensing — the other half of EDA duopoly" }
+
+  Fintech — Payment Processors:
+    - { ticker: FIS,  name: Fidelity National IS,         note: "Bank core processing + merchant + capital markets" }
+    - { ticker: FISV, name: Fiserv,                       note: "Bank tech / payment processing platform (formerly ticker FI)" }
+    - { ticker: GPN,  name: Global Payments,              note: "Merchant acquirer; recently restructured around merchant focus" }
+    - { ticker: PYPL, name: PayPal,                       note: "Payments + Venmo + Braintree; re-rating story" }
+    - { ticker: XYZ,  name: Block,                        note: "Cash App + Square; high-beta consumer/SMB payments (formerly ticker SQ)" }
+
+  Fintech — Digital Brokers & Neobanks:
+    - { ticker: COIN, name: Coinbase,                     note: "Pure-play US crypto exchange; very high beta" }
+    - { ticker: HOOD, name: Robinhood,                    note: "Retail broker; crypto + equity + derivatives" }
+    - { ticker: SCHW, name: Charles Schwab,               note: "Largest US discount broker; moderate vol" }
+    - { ticker: SOFI, name: SoFi Technologies,            note: "Digital bank; lending + invest + tech platform" }
+
+  Fintech — Exchanges & Financial Data:
+    - { ticker: CME,  name: CME Group,                    note: "Largest derivatives exchange globally" }
+    - { ticker: ICE,  name: Intercontinental Exchange,    note: "NYSE parent + data + mortgage tech" }
+    - { ticker: NDAQ, name: Nasdaq,                       note: "Exchange + index + analytics SaaS" }
+
+  Tech SaaS — Enterprise Software:
+    - { ticker: ADBE, name: Adobe,                        note: "Creative Cloud + Document Cloud + Experience" }
+    - { ticker: CRM,  name: Salesforce,                   note: "Largest SaaS pure-play; CRM + Data Cloud + Agentforce" }
+    - { ticker: INTU, name: Intuit,                       note: "TurboTax + QuickBooks + Credit Karma + Mailchimp" }
+    - { ticker: NOW,  name: ServiceNow,                   note: "Workflow automation platform; one of the best compounders" }
+    - { ticker: WDAY, name: Workday,                      note: "HCM + Financials SaaS for enterprise" }
+
+  Tech SaaS — Cybersecurity:
+    - { ticker: CRWD, name: CrowdStrike,                  note: "Endpoint + identity + cloud security; high beta post-2024 outage" }
+    - { ticker: FTNT, name: Fortinet,                     note: "Firewall + SD-WAN + secure networking" }
+    - { ticker: NET,  name: Cloudflare,                   note: "Edge platform + zero-trust + developer infra (4h RSI validation ticker)" }
+    - { ticker: PANW, name: Palo Alto Networks,           note: "Largest cyber pure-play; firewall + Prisma + Cortex" }
+    - { ticker: ZS,   name: Zscaler,                      note: "Zero-trust SASE; cloud-native security platform" }
+
+  Tech SaaS — Data & Analytics:
+    - { ticker: DDOG, name: Datadog,                      note: "Observability for cloud apps; AI-adjacent" }
+    - { ticker: PLTR, name: Palantir,                     note: "Foundry + AIP; very high beta, frequent moves" }
+    - { ticker: SNOW, name: Snowflake,                    note: "Data warehouse / cloud data platform; AI-adjacent" }
+
+  Tech SaaS — Vertical SaaS:
+    - { ticker: ADSK, name: Autodesk,                     note: "AEC + manufacturing + media design SaaS" }
+    - { ticker: VEEV, name: Veeva Systems,                note: "Life sciences vertical SaaS; CRM + content + quality" }
+
+  Tech SaaS — Cloud Infra / CDN:
+    - { ticker: AKAM, name: Akamai,                       note: "Edge delivery + security platform" }
+
+  Tech SaaS — Productivity:
+    - { ticker: HUBS, name: HubSpot,                      note: "Marketing + sales + service SaaS for SMB / mid-market" }
