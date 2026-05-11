@@ -98,9 +98,13 @@ def build_scan_rows(
             }
         )
 
-    all_rows.sort(key=lambda r: (r["rsi"] if r["rsi"] is not None else 200))
-    hits = [r for r in all_rows if r["status"] == "oversold"]
-    watch_list = [r for r in all_rows if r["status"] == "watch"]
+    # Full scan rows: alphabetical by ticker (table is searchable/scannable).
+    # Hits and watch list are sorted by RSI ascending so the most-oversold sits first
+    # in those panels.
+    all_rows.sort(key=lambda r: r["ticker"])
+    by_rsi = sorted(all_rows, key=lambda r: (r["rsi"] if r["rsi"] is not None else 200))
+    hits = [r for r in by_rsi if r["status"] == "oversold"]
+    watch_list = [r for r in by_rsi if r["status"] == "watch"]
     return all_rows, hits, watch_list
 
 
