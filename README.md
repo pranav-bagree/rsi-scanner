@@ -112,14 +112,13 @@ rsi-scanner/
 
 ## Scheduling details
 
-GH Actions cron is UTC and doesn't follow DST. To target 9:15 ET and 1:35 ET year-round, the workflow lists both EDT and EST offsets:
+Hourly during US trading hours, Monday–Friday. Single cron entry: `5 14-21 * * 1-5` (UTC).
 
-| Target ET time | EDT (UTC) | EST (UTC) |
-|----------------|-----------|-----------|
-| 09:15 ET       | 13:15     | 14:15     |
-| 13:35 ET       | 17:35     | 18:35     |
+UTC 14:05–21:05 maps to:
+- **EDT** (Mar–Nov): 10:05 ET → 17:05 ET (one wasteful run after market close)
+- **EST** (Nov–Mar): 09:05 ET → 16:05 ET (one wasteful run before market open)
 
-During DST transition weeks one of each pair fires "wrong" — that's harmless since the dashboard is idempotent.
+Either way, all 7 trading hours plus the two 4h bar closes (13:30 ET and 16:00 ET) are covered with a 5-minute buffer for data settling. Extra runs are idempotent — they just regenerate the same dashboard.
 
 ## Validation
 

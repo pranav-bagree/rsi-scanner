@@ -1,4 +1,4 @@
-name: Daily 4h RSI scan
+name: 4h RSI scan (hourly)
 
 # Runs the data pipeline (yfinance + RSI), publishes the dashboard to GitHub Pages.
 # Analysis (why_it_fell, deep_dive) is intentionally not run here — it happens locally
@@ -7,13 +7,11 @@ name: Daily 4h RSI scan
 
 on:
   schedule:
-    # Two scans per ET trading day. Cron is UTC, so we list both EDT and EST
-    # offsets to cover DST transitions year-round. Duplicate runs during transition
-    # weeks are harmless — the dashboard is idempotent.
-    - cron: '15 13 * * 1-5'   # 09:15 EDT  (pre-market readout)
-    - cron: '15 14 * * 1-5'   # 09:15 EST
-    - cron: '35 17 * * 1-5'   # 13:35 EDT  (after morning 4h bar closes)
-    - cron: '35 18 * * 1-5'   # 13:35 EST
+    # Hourly during US trading hours, weekdays. Cron is UTC; one entry covers
+    # both EDT and EST since 14:05–21:05 UTC spans 10:05–17:05 EDT and
+    # 09:05–16:05 EST — both fully bracket the 09:30–16:00 ET market session
+    # plus a buffer past the 13:30 ET / 16:00 ET 4h bar closes.
+    - cron: '5 14-21 * * 1-5'
   workflow_dispatch: {}
 
 permissions:
