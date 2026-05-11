@@ -89,38 +89,37 @@ def build_scan_rows(
                 }
             )
             continue
-        last = df_rsi.iloc[-1]
         prev = df_rsi.iloc[-2] if len(df_rsi) > 1 else None
-        change = ((last["Close"] - prev["Close"]) / prev["Close"] * 100) if prev is not None else None
-        rsi = float(last["RSI_14"])
-        status = "oversold" if rsi < oversold else "watch" if rsi < watch else "ok"
 
         # Live view: most recent bar from the in-progress-included series.
+        # This is what we display as "Price" and "RSI(14)" — the latest live values.
         live_df = bundle.get("live")
         live_rsi_series = live_df.dropna(subset=["RSI_14"]) if live_df is not None and "RSI_14" in live_df.columns else None
         if live_rsi_series is not None and not live_rsi_series.empty:
             live_last = live_rsi_series.iloc[-1]
-            live_rsi_val = float(live_last["RSI_14"])
-            live_price_val = float(live_last["Close"])
+            rsi = float(live_last["RSI_14"])
+            price = float(live_last["Close"])
             live_ts = live_rsi_series.index[-1]
-            # is_live = the live bar is newer than the most recent closed bar
-            is_live = live_ts > df_rsi.index[-1]
+            is_live = live_ts > df_rsi.index[-1]  # newer than last closed
         else:
-            live_rsi_val = rsi
-            live_price_val = float(last["Close"])
+            last = df_rsi.iloc[-1]
+            rsi = float(last["RSI_14"])
+            price = float(last["Close"])
             live_ts = df_rsi.index[-1]
             is_live = False
+
+        # Bar change: current live price vs the previous closed bar's close.
+        change = ((price - prev["Close"]) / prev["Close"] * 100) if prev is not None else None
+        status = "oversold" if rsi < oversold else "watch" if rsi < watch else "ok"
 
         all_rows.append(
             {
                 "ticker": t,
                 "company": u["name"],
                 "sector": u["sector"],
-                "price": float(last["Close"]),
+                "price": price,
                 "rsi": rsi,
                 "bar_change_pct": float(change) if change is not None else None,
-                "live_price": live_price_val,
-                "live_rsi": live_rsi_val,
                 "live_bar_ts": live_ts,
                 "is_live": is_live,
                 "status": status,
@@ -298,7 +297,7 @@ def main():
                 "price": h["price"],
                 "rsi": h["rsi"],
                 "move_5bar_pct": float(move_5bar),
-                "bar_human": h["last_bar_ts"].tz_convert(PT).strftime("%Y-%m-%d %H:%M PT"),
+                "bar_human": h["live_bar_ts"].tz_convert(PT).strftime("%Y-%m-%d %H:%M PT"),
                 "why_it_fell_html": md_to_html(a.get("why_it_fell") or ""),
                 "why_it_fell_citations": a.get("why_it_fell_citations", []),
                 "why_it_fell_skip_reason": skip_msg_why,
@@ -344,9 +343,6 @@ def main():
                 "price": r["price"],
                 "rsi": r["rsi"],
                 "bar_change_pct": r["bar_change_pct"],
-                "live_price": r.get("live_price"),
-                "live_rsi": r.get("live_rsi"),
-                "is_live": r.get("is_live", False),
                 "status": r["status"],
                 "market_cap": inline_fund.get(r["ticker"], {}).get("market_cap"),
                 "pe": inline_fund.get(r["ticker"], {}).get("trailing_pe"),
