@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ title }} — {{ run_ts_human }}</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg-card: #131826;
+    --bg-card-soft: #1a2030;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.16);
+    --text: #e6edf3;
+    --text-muted: #8b95a7;
+    --text-dim: #5d6877;
+    --accent: #7c8aff;
+    --alert: #f85149;
+    --alert-soft: rgba(248,81,73,0.12);
+    --warn: #f1c453;
+    --warn-soft: rgba(241,196,83,0.12);
+    --ok: #3fb950;
+    --ok-soft: rgba(63,185,80,0.12);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; }
+
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 48px 28px 96px; }
+
+  header.page {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 32px; flex-wrap: wrap; margin-bottom: 8px;
+  }
+  header.page h1 {
+    font-size: 28px; margin: 0; font-weight: 600; letter-spacing: -0.01em;
+  }
+  header.page .meta { color: var(--text-muted); font-size: 13px; }
+  header.page .meta .mono { color: var(--text); }
+
+  .summary {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    margin: 28px 0 36px;
+  }
+  .summary .stat {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px;
+  }
+  .summary .stat .label {
+    color: var(--text-muted); font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.05em; margin-bottom: 6px;
+  }
+  .summary .stat .value { font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
+  .summary .stat.alert .value { color: var(--alert); }
+  .summary .stat.warn .value { color: var(--warn); }
+
+  section { margin-top: 40px; }
+  section h2 {
+    font-size: 18px; font-weight: 600; letter-spacing: -0.01em;
+    margin: 0 0 16px; display: flex; align-items: center; gap: 10px;
+  }
+  section h2 .count {
+    font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 999px;
+    background: var(--bg-card-soft); color: var(--text-muted);
+  }
+  section h2 .count.alert { background: var(--alert-soft); color: var(--alert); }
+  section h2 .count.warn { background: var(--warn-soft); color: var(--warn); }
+
+  /* Hit card */
+  .hit {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 28px; margin-bottom: 20px;
+    border-left: 3px solid var(--alert);
+  }
+  .hit > .header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 24px; flex-wrap: wrap; margin-bottom: 18px;
+  }
+  .hit .title { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .hit .ticker { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+  .hit .company { color: var(--text-muted); font-size: 15px; }
+  .hit .sector-tag {
+    font-size: 11px; padding: 3px 10px; border-radius: 999px;
+    background: var(--bg-card-soft); color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .hit .key-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+  .hit .key-stats .ks { text-align: right; }
+  .hit .key-stats .ks .label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
+  .hit .key-stats .ks .value { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .hit .key-stats .ks .value.rsi-oversold { color: var(--alert); }
+  .hit .key-stats .ks .sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  .hit .analysis-section {
+    margin-top: 20px; padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  .hit .analysis-section h3 {
+    font-size: 13px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-muted); margin: 0 0 14px;
+  }
+  .hit .analysis-section .body {
+    font-size: 14.5px; line-height: 1.65;
+  }
+  .hit .analysis-section .body p { margin: 0 0 12px; }
+  .hit .analysis-section .body p:last-child { margin-bottom: 0; }
+  .hit .analysis-section .body h2 {
+    font-size: 14px; font-weight: 600; margin: 18px 0 8px;
+    color: var(--text); text-transform: none; letter-spacing: 0;
+  }
+  .hit .analysis-section .body h2:first-child { margin-top: 0; }
+  .hit .analysis-section .body ul { margin: 8px 0 12px; padding-left: 20px; }
+  .hit .analysis-section .body li { margin-bottom: 4px; }
+  .hit .analysis-section .body code { background: var(--bg-card-soft); padding: 1px 6px; border-radius: 4px; }
+
+  .citations {
+    margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border);
+    font-size: 12px; color: var(--text-muted);
+  }
+  .citations strong { color: var(--text-muted); font-weight: 500; }
+  .citations a { display: inline-block; margin-right: 14px; }
+
+  .analysis-skipped {
+    font-style: italic; color: var(--text-muted); font-size: 13px;
+  }
+
+  /* Watchlist */
+  .watch-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+  }
+  .watch-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    border-left: 3px solid var(--warn);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .watch-card .lhs .ticker { font-weight: 600; font-size: 15px; }
+  .watch-card .lhs .company { font-size: 12px; color: var(--text-muted); }
+  .watch-card .rhs { text-align: right; }
+  .watch-card .rsi-val { font-size: 18px; font-weight: 600; color: var(--warn); }
+  .watch-card .price { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+  /* Full scan table */
+  details.full-scan { margin-top: 16px; }
+  details.full-scan > summary {
+    cursor: pointer; padding: 12px 16px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; user-select: none;
+    color: var(--text-muted); font-size: 14px;
+  }
+  details.full-scan[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+  details.full-scan table {
+    width: 100%; border-collapse: collapse;
+    background: var(--bg-card); border: 1px solid var(--border); border-top: none;
+    border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;
+    overflow: hidden;
+  }
+  details.full-scan th, details.full-scan td {
+    padding: 10px 14px; text-align: left; font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+  details.full-scan tr:last-child td { border-bottom: none; }
+  details.full-scan th {
+    color: var(--text-muted); font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.05em; font-size: 11px;
+    background: var(--bg-card-soft);
+  }
+  details.full-scan td.numeric { text-align: right; font-variant-numeric: tabular-nums; }
+  details.full-scan td.ticker { font-weight: 600; }
+  details.full-scan td.sector { color: var(--text-muted); font-size: 12px; }
+  details.full-scan tr.row-oversold td { background: var(--alert-soft); }
+  details.full-scan tr.row-watch td { background: var(--warn-soft); }
+  details.full-scan tr.row-error td { color: var(--text-dim); font-style: italic; }
+  details.full-scan .rsi-cell.oversold { color: var(--alert); font-weight: 600; }
+  details.full-scan .rsi-cell.watch { color: var(--warn); font-weight: 500; }
+  details.full-scan .change-pos { color: var(--ok); }
+  details.full-scan .change-neg { color: var(--alert); }
+
+  .empty-state {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 36px; text-align: center;
+    color: var(--text-muted);
+  }
+  .empty-state .emoji-free-mark { font-size: 28px; font-weight: 600; color: var(--ok); margin-bottom: 6px; letter-spacing: -0.01em; }
+
+  footer.page {
+    margin-top: 64px; padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim); font-size: 12px;
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <div>
+      <h1>{{ title }}</h1>
+      <div class="meta">
+        Scan run <span class="mono">{{ run_ts_human }}</span> ·
+        <span class="mono">{{ universe_size }}</span> tickers ·
+        most recent closed 4h bar: <span class="mono">{{ latest_bar_human }}</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="summary">
+    <div class="stat {% if hits|length %}alert{% endif %}">
+      <div class="label">Oversold (RSI &lt; {{ oversold_threshold }})</div>
+      <div class="value">{{ hits|length }}</div>
+    </div>
+    <div class="stat {% if watch|length %}warn{% endif %}">
+      <div class="label">Watch ({{ oversold_threshold }} – {{ watch_threshold }})</div>
+      <div class="value">{{ watch|length }}</div>
+    </div>
+    <div class="stat">
+      <div class="label">Universe</div>
+      <div class="value">{{ universe_size }}</div>
+    </div>
+    <div class="stat">
+      <div class="label">Median RSI</div>
+      <div class="value">{{ "%.1f"|format(median_rsi) if median_rsi is not none else "—" }}</div>
+    </div>
+  </div>
+
+  {% if hits %}
+    <section>
+      <h2>Oversold signals <span class="count alert">{{ hits|length }}</span></h2>
+      {% for h in hits %}
+        <div class="hit">
+          <div class="header">
+            <div class="title">
+              <div class="ticker">{{ h.ticker }}</div>
+              <div class="company">{{ h.company }}</div>
+              <div class="sector-tag">{{ h.sector }}</div>
+            </div>
+            <div class="key-stats">
+              <div class="ks">
+                <div class="label">Price</div>
+                <div class="value">${{ "%.2f"|format(h.price) }}</div>
+                <div class="sub">{{ h.bar_human }}</div>
+              </div>
+              <div class="ks">
+                <div class="label">RSI(14)</div>
+                <div class="value rsi-oversold">{{ "%.2f"|format(h.rsi) }}</div>
+                <div class="sub">threshold &lt; {{ oversold_threshold }}</div>
+              </div>
+              <div class="ks">
+                <div class="label">5-bar move</div>
+                <div class="value {% if h.move_5bar_pct < 0 %}rsi-oversold{% endif %}">{{ "%+.1f"|format(h.move_5bar_pct) }}%</div>
+                <div class="sub">last ~2.5 trading days</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="analysis-section">
+            <h3>Why it fell</h3>
+            {% if h.why_it_fell_html %}
+              <div class="body">{{ h.why_it_fell_html|safe }}</div>
+              {% if h.why_it_fell_citations %}
+                <div class="citations">
+                  <strong>Sources:</strong>
+                  {% for c in h.why_it_fell_citations %}
+                    <a href="{{ c.url }}" target="_blank" rel="noopener noreferrer">{{ c.title or c.url }}</a>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            {% else %}
+              <div class="analysis-skipped">{{ (h.why_it_fell_skip_reason or "Analysis not run.")|safe }}</div>
+            {% endif %}
+          </div>
+
+          <div class="analysis-section">
+            <h3>Deep dive</h3>
+            {% if h.deep_dive_html %}
+              <div class="body">{{ h.deep_dive_html|safe }}</div>
+            {% else %}
+              <div class="analysis-skipped">{{ (h.deep_dive_skip_reason or "Analysis not run.")|safe }}</div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </section>
+  {% else %}
+    <section>
+      <h2>Oversold signals <span class="count">0</span></h2>
+      <div class="empty-state">
+        <div class="emoji-free-mark">No hits</div>
+        <div>None of the {{ universe_size }} tracked tickers closed below RSI {{ oversold_threshold }} on the latest 4h bar.</div>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if watch %}
+    <section>
+      <h2>Approaching oversold <span class="count warn">{{ watch|length }}</span></h2>
+      <div class="watch-grid">
+        {% for w in watch %}
+          <div class="watch-card">
+            <div class="lhs">
+              <div class="ticker">{{ w.ticker }}</div>
+              <div class="company">{{ w.company }}</div>
+            </div>
+            <div class="rhs">
+              <div class="rsi-val">{{ "%.1f"|format(w.rsi) }}</div>
+              <div class="price">${{ "%.2f"|format(w.price) }}</div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  <section>
+    <h2>Full scan <span class="count">{{ rows|length }}</span></h2>
+    <details class="full-scan" {% if not hits %}open{% endif %}>
+      <summary>Show all {{ rows|length }} tickers</summary>
+      <table>
+        <thead>
+          <tr>
+            <th>Ticker</th>
+            <th>Company</th>
+            <th>Sector</th>
+            <th class="numeric">Price</th>
+            <th class="numeric">Bar change</th>
+            <th class="numeric">RSI(14)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+            <tr class="{% if r.status == 'oversold' %}row-oversold{% elif r.status == 'watch' %}row-watch{% elif r.status == 'error' %}row-error{% endif %}">
+              <td class="ticker">{{ r.ticker }}</td>
+              <td>{{ r.company }}</td>
+              <td class="sector">{{ r.sector }}</td>
+              <td class="numeric">{% if r.price is not none %}${{ "%.2f"|format(r.price) }}{% else %}—{% endif %}</td>
+              <td class="numeric {% if r.bar_change_pct is not none and r.bar_change_pct >= 0 %}change-pos{% elif r.bar_change_pct is not none %}change-neg{% endif %}">
+                {% if r.bar_change_pct is not none %}{{ "%+.2f"|format(r.bar_change_pct) }}%{% else %}—{% endif %}
+              </td>
+              <td class="numeric">
+                {% if r.rsi is not none %}
+                  <span class="rsi-cell {% if r.status == 'oversold' %}oversold{% elif r.status == 'watch' %}watch{% endif %}">{{ "%.2f"|format(r.rsi) }}</span>
+                {% else %}—{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </details>
+  </section>
+
+  <footer class="page">
+    <div>
+      Generated {{ run_ts_iso }} · Wilder RSI({{ rsi_period }}) on 4h closed bars · TradingView convention (9:30 / 13:30 ET)
+    </div>
+    <div>
+      Analysis model: <span class="mono">{{ analysis_model or "—" }}</span> · Data: yfinance
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual env
+.venv/
+venv/
+
+# Local scan outputs (not the published dashboard)
+output/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# One-off test artifacts (kept locally, not part of the pipeline)
+NET_4h_rsi.png

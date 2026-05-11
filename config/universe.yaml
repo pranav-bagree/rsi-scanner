@@ -1,0 +1,77 @@
+version: 2026-05-10
+description: AI infrastructure universe — 48 tickers across 12 subcategories
+
+sectors:
+  AI Compute / GPUs / Accelerators:
+    - { ticker: NVDA, name: Nvidia,                       note: "Dominant GPU; defines cluster interconnect architecture" }
+    - { ticker: AMD,  name: Advanced Micro Devices,       note: "MI300X GPU line; direct NVDA challenger in data centers" }
+    - { ticker: INTC, name: Intel,                        note: "Gaudi 3 accelerators; struggling but in the race" }
+
+  Chip Foundry:
+    - { ticker: TSM,  name: TSMC,                         note: "Makes virtually every chip on this list — the silicon chokepoint" }
+
+  Custom Silicon / ASICs:
+    - { ticker: AVGO, name: Broadcom,                     note: "Custom AI ASICs for Google (TPU), Meta (MTIA); switching silicon" }
+    - { ticker: MRVL, name: Marvell,                      note: "Custom AI silicon for Amazon and Microsoft; DSPs for optics" }
+
+  Optical Devices:
+    - { ticker: LITE, name: Lumentum,                     note: "Lasers, VCSELs, transceiver modules, optical circuit switches" }
+    - { ticker: COHR, name: Coherent,                     note: "High-speed transceiver modules; InP wafer production" }
+    - { ticker: AAOI, name: Applied Optoelectronics,      note: "Pure-play 800G / 1.6T transceiver modules for hyperscalers" }
+    - { ticker: LASR, name: nLight,                       note: "Fiber lasers, beam delivery — the light source layer" }
+    - { ticker: POET, name: POET Technologies,            note: "Photonic ICs, optical engines, thin-film LiNbO3 modulators" }
+
+  Optical Supporting Components:
+    - { ticker: MTSI, name: MACOM,                        note: "Laser drivers and TIAs — the analog ICs inside every transceiver" }
+    - { ticker: ALMU, name: Aeluma,                       note: "High-speed photodetectors, nonlinear optical materials" }
+    - { ticker: LPTH, name: LightPath,                    note: "Micro-lenses and IR optical assemblies — beam-shaping" }
+    - { ticker: OPTX, name: Syntec Optics,                note: "Micro-lens arrays, precision optical components" }
+    - { ticker: FN,   name: Fabrinet,                     note: "Contract manufacturing and complex optical packaging" }
+    - { ticker: VIAV, name: VIAVI Solutions,              note: "Optical test & measurement — link certification" }
+
+  AI Networking & Interconnect:
+    - { ticker: ANET, name: Arista Networks,              note: "800G Ethernet switches; AI backend fabric core growth pillar" }
+    - { ticker: CSCO, name: Cisco,                        note: "AI infra switches and optical systems; $2.1B hyperscaler AI orders" }
+    - { ticker: CRDO, name: Credo,                        note: "AECs and optical DSPs for large-scale AI cluster fabric" }
+    - { ticker: ALAB, name: Astera Labs,                  note: "PCIe retimers, smart cable modules, Gen6 switches" }
+    - { ticker: APH,  name: Amphenol,                     note: "Connectors and cables — physical layer of every rack" }
+    - { ticker: CIEN, name: Ciena,                        note: "Coherent optical transport (WaveLogic 6) for inter-DC long-haul" }
+    - { ticker: NOK,  name: Nokia / Infinera,             note: "ICE7 coherent engine; same inter-DC long-haul play as Ciena" }
+
+  AI Servers & Systems:
+    - { ticker: SMCI, name: Super Micro Computer,         note: "Nvidia's closest server integration partner; AI-native server builder" }
+    - { ticker: DELL, name: Dell Technologies,            note: "PowerEdge AI servers; hyperscaler and enterprise exposure" }
+    - { ticker: HPE,  name: Hewlett Packard Enterprise,   note: "Cray supercomputers, ProLiant AI servers, government contracts" }
+
+  Power, Cooling & Physical Infrastructure:
+    - { ticker: VRT,  name: Vertiv Holdings,              note: "Power distribution and liquid cooling for AI racks" }
+    - { ticker: MOD,  name: Modine Manufacturing,         note: "Liquid cooling systems for high-density AI compute; higher beta" }
+
+  Data Center Operators:
+    - { ticker: EQIX, name: Equinix,                      note: "Largest global colocation provider; AI interconnection hubs" }
+    - { ticker: DLR,  name: Digital Realty,               note: "Hyperscale data center REIT; long-term capacity leases" }
+    - { ticker: NBIS, name: Nebius Group,                 note: "GPU-native cloud operator; spun out of Yandex" }
+    - { ticker: CRWV, name: CoreWeave,                    note: "Pure-play GPU cloud; NVDA-backed; vs AWS/Azure on AI workloads" }
+
+  AI Energy:
+    - { ticker: CEG,  name: Constellation Energy,         note: "Nuclear power; AWS deal at Three Mile Island" }
+    - { ticker: VST,  name: Vistra Energy,                note: "Largest US competitive power producer; Microsoft power deal" }
+    - { ticker: NRG,  name: NRG Energy,                   note: "Diversified power generation; growing data center exposure" }
+    - { ticker: IREN, name: Iris Energy,                  note: "Renewable-powered GPU cloud operator" }
+    - { ticker: OKLO, name: Oklo,                         note: "Sam Altman-backed nuclear microreactors; long-dated" }
+
+  AI Memory & Storage:
+    - { ticker: MU,   name: Micron Technology,            note: "HBM3E — memory inside H100/H200/B200 GPUs" }
+    - { ticker: WDC,  name: Western Digital,              note: "Flash storage and HDDs for AI training and inference" }
+    - { ticker: STX,  name: Seagate Technology,           note: "High-capacity HDDs for AI data lakes; HAMR ramp" }
+
+  Hyperscalers / Cloud Platforms:
+    - { ticker: MSFT, name: Microsoft,                    note: "Azure AI + OpenAI partnership; largest AI infra capex spender" }
+    - { ticker: AMZN, name: Amazon,                       note: "AWS Trainium/Inferentia custom silicon; largest cloud provider" }
+    - { ticker: GOOGL,name: Alphabet,                     note: "TPU custom silicon; Gemini; Google Cloud" }
+    - { ticker: META, name: Meta Platforms,               note: "Largest open-source AI capex spender; own GPU clusters" }
+    - { ticker: ORCL, name: Oracle,                       note: "OCI surging on AI workloads; GPU cluster bookings accelerating" }
+
+  AI EDA & Design Tools:
+    - { ticker: CDNS, name: Cadence Design Systems,       note: "Every custom ASIC runs through Cadence tools" }
+    - { ticker: SNPS, name: Synopsys,                     note: "Synthesis, verification, IP licensing — the other half of EDA duopoly" }

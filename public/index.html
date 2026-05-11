@@ -1,0 +1,1054 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Infra — 4h RSI Scanner — 2026-05-10 22:20 ET</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg-card: #131826;
+    --bg-card-soft: #1a2030;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.16);
+    --text: #e6edf3;
+    --text-muted: #8b95a7;
+    --text-dim: #5d6877;
+    --accent: #7c8aff;
+    --alert: #f85149;
+    --alert-soft: rgba(248,81,73,0.12);
+    --warn: #f1c453;
+    --warn-soft: rgba(241,196,83,0.12);
+    --ok: #3fb950;
+    --ok-soft: rgba(63,185,80,0.12);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; }
+
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 48px 28px 96px; }
+
+  header.page {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 32px; flex-wrap: wrap; margin-bottom: 8px;
+  }
+  header.page h1 {
+    font-size: 28px; margin: 0; font-weight: 600; letter-spacing: -0.01em;
+  }
+  header.page .meta { color: var(--text-muted); font-size: 13px; }
+  header.page .meta .mono { color: var(--text); }
+
+  .summary {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    margin: 28px 0 36px;
+  }
+  .summary .stat {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px;
+  }
+  .summary .stat .label {
+    color: var(--text-muted); font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.05em; margin-bottom: 6px;
+  }
+  .summary .stat .value { font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
+  .summary .stat.alert .value { color: var(--alert); }
+  .summary .stat.warn .value { color: var(--warn); }
+
+  section { margin-top: 40px; }
+  section h2 {
+    font-size: 18px; font-weight: 600; letter-spacing: -0.01em;
+    margin: 0 0 16px; display: flex; align-items: center; gap: 10px;
+  }
+  section h2 .count {
+    font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 999px;
+    background: var(--bg-card-soft); color: var(--text-muted);
+  }
+  section h2 .count.alert { background: var(--alert-soft); color: var(--alert); }
+  section h2 .count.warn { background: var(--warn-soft); color: var(--warn); }
+
+  /* Hit card */
+  .hit {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 28px; margin-bottom: 20px;
+    border-left: 3px solid var(--alert);
+  }
+  .hit > .header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 24px; flex-wrap: wrap; margin-bottom: 18px;
+  }
+  .hit .title { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .hit .ticker { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+  .hit .company { color: var(--text-muted); font-size: 15px; }
+  .hit .sector-tag {
+    font-size: 11px; padding: 3px 10px; border-radius: 999px;
+    background: var(--bg-card-soft); color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .hit .key-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+  .hit .key-stats .ks { text-align: right; }
+  .hit .key-stats .ks .label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
+  .hit .key-stats .ks .value { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .hit .key-stats .ks .value.rsi-oversold { color: var(--alert); }
+  .hit .key-stats .ks .sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  .hit .analysis-section {
+    margin-top: 20px; padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  .hit .analysis-section h3 {
+    font-size: 13px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-muted); margin: 0 0 14px;
+  }
+  .hit .analysis-section .body {
+    font-size: 14.5px; line-height: 1.65;
+  }
+  .hit .analysis-section .body p { margin: 0 0 12px; }
+  .hit .analysis-section .body p:last-child { margin-bottom: 0; }
+  .hit .analysis-section .body h2 {
+    font-size: 14px; font-weight: 600; margin: 18px 0 8px;
+    color: var(--text); text-transform: none; letter-spacing: 0;
+  }
+  .hit .analysis-section .body h2:first-child { margin-top: 0; }
+  .hit .analysis-section .body ul { margin: 8px 0 12px; padding-left: 20px; }
+  .hit .analysis-section .body li { margin-bottom: 4px; }
+  .hit .analysis-section .body code { background: var(--bg-card-soft); padding: 1px 6px; border-radius: 4px; }
+
+  .citations {
+    margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border);
+    font-size: 12px; color: var(--text-muted);
+  }
+  .citations strong { color: var(--text-muted); font-weight: 500; }
+  .citations a { display: inline-block; margin-right: 14px; }
+
+  .analysis-skipped {
+    font-style: italic; color: var(--text-muted); font-size: 13px;
+  }
+
+  /* Watchlist */
+  .watch-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+  }
+  .watch-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    border-left: 3px solid var(--warn);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .watch-card .lhs .ticker { font-weight: 600; font-size: 15px; }
+  .watch-card .lhs .company { font-size: 12px; color: var(--text-muted); }
+  .watch-card .rhs { text-align: right; }
+  .watch-card .rsi-val { font-size: 18px; font-weight: 600; color: var(--warn); }
+  .watch-card .price { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+  /* Full scan table */
+  details.full-scan { margin-top: 16px; }
+  details.full-scan > summary {
+    cursor: pointer; padding: 12px 16px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; user-select: none;
+    color: var(--text-muted); font-size: 14px;
+  }
+  details.full-scan[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+  details.full-scan table {
+    width: 100%; border-collapse: collapse;
+    background: var(--bg-card); border: 1px solid var(--border); border-top: none;
+    border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;
+    overflow: hidden;
+  }
+  details.full-scan th, details.full-scan td {
+    padding: 10px 14px; text-align: left; font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+  details.full-scan tr:last-child td { border-bottom: none; }
+  details.full-scan th {
+    color: var(--text-muted); font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.05em; font-size: 11px;
+    background: var(--bg-card-soft);
+  }
+  details.full-scan td.numeric { text-align: right; font-variant-numeric: tabular-nums; }
+  details.full-scan td.ticker { font-weight: 600; }
+  details.full-scan td.sector { color: var(--text-muted); font-size: 12px; }
+  details.full-scan tr.row-oversold td { background: var(--alert-soft); }
+  details.full-scan tr.row-watch td { background: var(--warn-soft); }
+  details.full-scan tr.row-error td { color: var(--text-dim); font-style: italic; }
+  details.full-scan .rsi-cell.oversold { color: var(--alert); font-weight: 600; }
+  details.full-scan .rsi-cell.watch { color: var(--warn); font-weight: 500; }
+  details.full-scan .change-pos { color: var(--ok); }
+  details.full-scan .change-neg { color: var(--alert); }
+
+  .empty-state {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 36px; text-align: center;
+    color: var(--text-muted);
+  }
+  .empty-state .emoji-free-mark { font-size: 28px; font-weight: 600; color: var(--ok); margin-bottom: 6px; letter-spacing: -0.01em; }
+
+  footer.page {
+    margin-top: 64px; padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim); font-size: 12px;
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <div>
+      <h1>AI Infra — 4h RSI Scanner</h1>
+      <div class="meta">
+        Scan run <span class="mono">2026-05-10 22:20 ET</span> ·
+        <span class="mono">48</span> tickers ·
+        most recent closed 4h bar: <span class="mono">2026-05-08 13:30 ET</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="summary">
+    <div class="stat ">
+      <div class="label">Oversold (RSI &lt; 25)</div>
+      <div class="value">0</div>
+    </div>
+    <div class="stat warn">
+      <div class="label">Watch (25 – 35)</div>
+      <div class="value">4</div>
+    </div>
+    <div class="stat">
+      <div class="label">Universe</div>
+      <div class="value">48</div>
+    </div>
+    <div class="stat">
+      <div class="label">Median RSI</div>
+      <div class="value">59.4</div>
+    </div>
+  </div>
+
+  
+    <section>
+      <h2>Oversold signals <span class="count">0</span></h2>
+      <div class="empty-state">
+        <div class="emoji-free-mark">No hits</div>
+        <div>None of the 48 tracked tickers closed below RSI 25 on the latest 4h bar.</div>
+      </div>
+    </section>
+  
+
+  
+    <section>
+      <h2>Approaching oversold <span class="count warn">4</span></h2>
+      <div class="watch-grid">
+        
+          <div class="watch-card">
+            <div class="lhs">
+              <div class="ticker">APH</div>
+              <div class="company">Amphenol</div>
+            </div>
+            <div class="rhs">
+              <div class="rsi-val">26.9</div>
+              <div class="price">$127.97</div>
+            </div>
+          </div>
+        
+          <div class="watch-card">
+            <div class="lhs">
+              <div class="ticker">NRG</div>
+              <div class="company">NRG Energy</div>
+            </div>
+            <div class="rhs">
+              <div class="rsi-val">30.2</div>
+              <div class="price">$138.05</div>
+            </div>
+          </div>
+        
+          <div class="watch-card">
+            <div class="lhs">
+              <div class="ticker">VST</div>
+              <div class="company">Vistra Energy</div>
+            </div>
+            <div class="rhs">
+              <div class="rsi-val">33.6</div>
+              <div class="price">$147.73</div>
+            </div>
+          </div>
+        
+          <div class="watch-card">
+            <div class="lhs">
+              <div class="ticker">ANET</div>
+              <div class="company">Arista Networks</div>
+            </div>
+            <div class="rhs">
+              <div class="rsi-val">34.6</div>
+              <div class="price">$141.78</div>
+            </div>
+          </div>
+        
+      </div>
+    </section>
+  
+
+  <section>
+    <h2>Full scan <span class="count">48</span></h2>
+    <details class="full-scan" open>
+      <summary>Show all 48 tickers</summary>
+      <table>
+        <thead>
+          <tr>
+            <th>Ticker</th>
+            <th>Company</th>
+            <th>Sector</th>
+            <th class="numeric">Price</th>
+            <th class="numeric">Bar change</th>
+            <th class="numeric">RSI(14)</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+            <tr class="row-watch">
+              <td class="ticker">APH</td>
+              <td>Amphenol</td>
+              <td class="sector">AI Networking & Interconnect</td>
+              <td class="numeric">$127.97</td>
+              <td class="numeric change-neg">
+                -2.17%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell watch">26.91</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="row-watch">
+              <td class="ticker">NRG</td>
+              <td>NRG Energy</td>
+              <td class="sector">AI Energy</td>
+              <td class="numeric">$138.05</td>
+              <td class="numeric change-neg">
+                -1.99%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell watch">30.25</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="row-watch">
+              <td class="ticker">VST</td>
+              <td>Vistra Energy</td>
+              <td class="sector">AI Energy</td>
+              <td class="numeric">$147.73</td>
+              <td class="numeric change-neg">
+                -0.07%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell watch">33.59</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="row-watch">
+              <td class="ticker">ANET</td>
+              <td>Arista Networks</td>
+              <td class="sector">AI Networking & Interconnect</td>
+              <td class="numeric">$141.78</td>
+              <td class="numeric change-pos">
+                +1.65%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell watch">34.65</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">META</td>
+              <td>Meta Platforms</td>
+              <td class="sector">Hyperscalers / Cloud Platforms</td>
+              <td class="numeric">$609.64</td>
+              <td class="numeric change-neg">
+                -0.05%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">37.95</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">OPTX</td>
+              <td>Syntec Optics</td>
+              <td class="sector">Optical Supporting Components</td>
+              <td class="numeric">$7.31</td>
+              <td class="numeric change-pos">
+                +1.67%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">40.26</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">FN</td>
+              <td>Fabrinet</td>
+              <td class="sector">Optical Supporting Components</td>
+              <td class="numeric">$621.33</td>
+              <td class="numeric change-pos">
+                +1.03%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">41.10</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">LPTH</td>
+              <td>LightPath</td>
+              <td class="sector">Optical Supporting Components</td>
+              <td class="numeric">$11.50</td>
+              <td class="numeric change-pos">
+                +4.73%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">41.87</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">AAOI</td>
+              <td>Applied Optoelectronics</td>
+              <td class="sector">Optical Devices</td>
+              <td class="numeric">$148.99</td>
+              <td class="numeric change-pos">
+                +3.09%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">45.06</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">CRWV</td>
+              <td>CoreWeave</td>
+              <td class="sector">Data Center Operators</td>
+              <td class="numeric">$114.13</td>
+              <td class="numeric change-pos">
+                +0.91%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">45.66</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">CEG</td>
+              <td>Constellation Energy</td>
+              <td class="sector">AI Energy</td>
+              <td class="numeric">$303.68</td>
+              <td class="numeric change-neg">
+                -1.41%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">45.67</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">DLR</td>
+              <td>Digital Realty</td>
+              <td class="sector">Data Center Operators</td>
+              <td class="numeric">$195.28</td>
+              <td class="numeric change-neg">
+                -0.45%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">46.93</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">EQIX</td>
+              <td>Equinix</td>
+              <td class="sector">Data Center Operators</td>
+              <td class="numeric">$1071.73</td>
+              <td class="numeric change-neg">
+                -0.40%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">47.38</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">LITE</td>
+              <td>Lumentum</td>
+              <td class="sector">Optical Devices</td>
+              <td class="numeric">$903.70</td>
+              <td class="numeric change-pos">
+                +3.81%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">50.58</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">MSFT</td>
+              <td>Microsoft</td>
+              <td class="sector">Hyperscalers / Cloud Platforms</td>
+              <td class="numeric">$415.15</td>
+              <td class="numeric change-neg">
+                -0.49%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">50.72</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">ALAB</td>
+              <td>Astera Labs</td>
+              <td class="sector">AI Networking & Interconnect</td>
+              <td class="numeric">$199.79</td>
+              <td class="numeric change-pos">
+                +1.71%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">53.74</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">OKLO</td>
+              <td>Oklo</td>
+              <td class="sector">AI Energy</td>
+              <td class="numeric">$72.51</td>
+              <td class="numeric change-pos">
+                +1.87%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">54.18</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">COHR</td>
+              <td>Coherent</td>
+              <td class="sector">Optical Devices</td>
+              <td class="numeric">$335.25</td>
+              <td class="numeric change-pos">
+                +3.66%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">55.32</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">VIAV</td>
+              <td>VIAVI Solutions</td>
+              <td class="sector">Optical Supporting Components</td>
+              <td class="numeric">$51.21</td>
+              <td class="numeric change-pos">
+                +2.02%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">55.56</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">ALMU</td>
+              <td>Aeluma</td>
+              <td class="sector">Optical Supporting Components</td>
+              <td class="numeric">$24.35</td>
+              <td class="numeric change-neg">
+                -0.65%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">56.34</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">CIEN</td>
+              <td>Ciena</td>
+              <td class="sector">AI Networking & Interconnect</td>
+              <td class="numeric">$547.52</td>
+              <td class="numeric change-pos">
+                +0.61%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">56.98</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">CRDO</td>
+              <td>Credo</td>
+              <td class="sector">AI Networking & Interconnect</td>
+              <td class="numeric">$188.60</td>
+              <td class="numeric change-pos">
+                +0.85%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">57.38</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">VRT</td>
+              <td>Vertiv Holdings</td>
+              <td class="sector">Power, Cooling & Physical Infrastructure</td>
+              <td class="numeric">$339.92</td>
+              <td class="numeric change-neg">
+                -1.45%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">58.59</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">LASR</td>
+              <td>nLight</td>
+              <td class="sector">Optical Devices</td>
+              <td class="numeric">$74.02</td>
+              <td class="numeric change-pos">
+                +2.39%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">59.24</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">NBIS</td>
+              <td>Nebius Group</td>
+              <td class="sector">Data Center Operators</td>
+              <td class="numeric">$177.04</td>
+              <td class="numeric change-neg">
+                -1.94%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">59.58</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">NOK</td>
+              <td>Nokia / Infinera</td>
+              <td class="sector">AI Networking & Interconnect</td>
+              <td class="numeric">$12.83</td>
+              <td class="numeric change-pos">
+                +0.55%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">60.42</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">TSM</td>
+              <td>TSMC</td>
+              <td class="sector">Chip Foundry</td>
+              <td class="numeric">$411.53</td>
+              <td class="numeric change-pos">
+                +0.91%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">60.87</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">MOD</td>
+              <td>Modine Manufacturing</td>
+              <td class="sector">Power, Cooling & Physical Infrastructure</td>
+              <td class="numeric">$273.03</td>
+              <td class="numeric change-neg">
+                -2.59%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">60.93</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">AVGO</td>
+              <td>Broadcom</td>
+              <td class="sector">Custom Silicon / ASICs</td>
+              <td class="numeric">$429.90</td>
+              <td class="numeric change-neg">
+                -0.10%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">61.12</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">MRVL</td>
+              <td>Marvell</td>
+              <td class="sector">Custom Silicon / ASICs</td>
+              <td class="numeric">$170.14</td>
+              <td class="numeric change-pos">
+                +1.01%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">62.34</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">POET</td>
+              <td>POET Technologies</td>
+              <td class="sector">Optical Devices</td>
+              <td class="numeric">$10.94</td>
+              <td class="numeric change-pos">
+                +0.97%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">63.28</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">NVDA</td>
+              <td>Nvidia</td>
+              <td class="sector">AI Compute / GPUs / Accelerators</td>
+              <td class="numeric">$215.21</td>
+              <td class="numeric change-neg">
+                -0.22%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">66.42</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">AMZN</td>
+              <td>Amazon</td>
+              <td class="sector">Hyperscalers / Cloud Platforms</td>
+              <td class="numeric">$272.68</td>
+              <td class="numeric change-pos">
+                +0.12%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">66.60</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">WDC</td>
+              <td>Western Digital</td>
+              <td class="sector">AI Memory & Storage</td>
+              <td class="numeric">$480.00</td>
+              <td class="numeric change-pos">
+                +1.61%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">69.10</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">IREN</td>
+              <td>Iris Energy</td>
+              <td class="sector">AI Energy</td>
+              <td class="numeric">$61.22</td>
+              <td class="numeric change-pos">
+                +2.77%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">69.75</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">SNPS</td>
+              <td>Synopsys</td>
+              <td class="sector">AI EDA & Design Tools</td>
+              <td class="numeric">$516.33</td>
+              <td class="numeric change-neg">
+                -0.00%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">70.76</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">CSCO</td>
+              <td>Cisco</td>
+              <td class="sector">AI Networking & Interconnect</td>
+              <td class="numeric">$96.57</td>
+              <td class="numeric change-pos">
+                +0.00%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">71.28</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">ORCL</td>
+              <td>Oracle</td>
+              <td class="sector">Hyperscalers / Cloud Platforms</td>
+              <td class="numeric">$195.94</td>
+              <td class="numeric change-neg">
+                -0.31%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">71.40</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">CDNS</td>
+              <td>Cadence Design Systems</td>
+              <td class="sector">AI EDA & Design Tools</td>
+              <td class="numeric">$362.62</td>
+              <td class="numeric change-neg">
+                -0.26%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">72.84</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">HPE</td>
+              <td>Hewlett Packard Enterprise</td>
+              <td class="sector">AI Servers & Systems</td>
+              <td class="numeric">$31.33</td>
+              <td class="numeric change-pos">
+                +1.99%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">72.85</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">SMCI</td>
+              <td>Super Micro Computer</td>
+              <td class="sector">AI Servers & Systems</td>
+              <td class="numeric">$35.37</td>
+              <td class="numeric change-pos">
+                +1.40%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">73.23</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">STX</td>
+              <td>Seagate Technology</td>
+              <td class="sector">AI Memory & Storage</td>
+              <td class="numeric">$782.55</td>
+              <td class="numeric change-neg">
+                -0.40%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">75.93</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">DELL</td>
+              <td>Dell Technologies</td>
+              <td class="sector">AI Servers & Systems</td>
+              <td class="numeric">$260.33</td>
+              <td class="numeric change-neg">
+                -0.26%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">79.91</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">INTC</td>
+              <td>Intel</td>
+              <td class="sector">AI Compute / GPUs / Accelerators</td>
+              <td class="numeric">$124.92</td>
+              <td class="numeric change-neg">
+                -1.67%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">80.58</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">AMD</td>
+              <td>Advanced Micro Devices</td>
+              <td class="sector">AI Compute / GPUs / Accelerators</td>
+              <td class="numeric">$455.00</td>
+              <td class="numeric change-pos">
+                +2.08%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">80.80</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">MU</td>
+              <td>Micron Technology</td>
+              <td class="sector">AI Memory & Storage</td>
+              <td class="numeric">$747.07</td>
+              <td class="numeric change-pos">
+                +1.46%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">83.71</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">GOOGL</td>
+              <td>Alphabet</td>
+              <td class="sector">Hyperscalers / Cloud Platforms</td>
+              <td class="numeric">$400.81</td>
+              <td class="numeric change-pos">
+                +0.76%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">84.41</span>
+                
+              </td>
+            </tr>
+          
+            <tr class="">
+              <td class="ticker">MTSI</td>
+              <td>MACOM</td>
+              <td class="sector">Optical Supporting Components</td>
+              <td class="numeric">$360.00</td>
+              <td class="numeric change-pos">
+                +2.09%
+              </td>
+              <td class="numeric">
+                
+                  <span class="rsi-cell ">84.61</span>
+                
+              </td>
+            </tr>
+          
+        </tbody>
+      </table>
+    </details>
+  </section>
+
+  <footer class="page">
+    <div>
+      Generated 2026-05-10T22:20:17 · Wilder RSI(14) on 4h closed bars · TradingView convention (9:30 / 13:30 ET)
+    </div>
+    <div>
+      Analysis model: <span class="mono">—</span> · Data: yfinance
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

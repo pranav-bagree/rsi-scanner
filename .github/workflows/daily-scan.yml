@@ -1,0 +1,67 @@
+name: Daily 4h RSI scan
+
+# Runs the data pipeline (yfinance + RSI), publishes the dashboard to GitHub Pages.
+# Analysis (why_it_fell, deep_dive) is intentionally not run here — it happens locally
+# via Claude Code skills (/analyze-stock, /why-fell), since this account doesn't have
+# an Anthropic API key available in CI.
+
+on:
+  schedule:
+    # Two scans per ET trading day. Cron is UTC, so we list both EDT and EST
+    # offsets to cover DST transitions year-round. Duplicate runs during transition
+    # weeks are harmless — the dashboard is idempotent.
+    - cron: '15 13 * * 1-5'   # 09:15 EDT  (pre-market readout)
+    - cron: '15 14 * * 1-5'   # 09:15 EST
+    - cron: '35 17 * * 1-5'   # 13:35 EDT  (after morning 4h bar closes)
+    - cron: '35 18 * * 1-5'   # 13:35 EST
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scan
+        run: python scan.py --skip-analysis --output public/index.html
+
+      - name: Stamp build info
+        run: |
+          mkdir -p public
+          {
+            echo "Built: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            echo "Commit: ${GITHUB_SHA}"
+            echo "Run: ${GITHUB_RUN_ID}"
+          } > public/build.txt
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: scan
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

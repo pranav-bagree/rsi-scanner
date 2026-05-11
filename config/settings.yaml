@@ -1,0 +1,23 @@
+rsi:
+  period: 14
+  oversold_threshold: 25
+  watch_threshold: 35       # surface in "approaching oversold" panel
+
+prices:
+  interval: 4h
+  period: 3mo               # ~63 trading days; plenty to seed RSI(14)
+
+analysis:
+  model: claude-opus-4-7
+  max_tokens: 4096
+  why_it_fell:
+    enabled: true
+    web_search_max_uses: 5
+    lookback_days: 5
+  deep_dive:
+    enabled: true
+  max_hits_to_analyze: 10   # safety cap on API spend per run
+
+dashboard:
+  title: "AI Infra — 4h RSI Scanner"
+  output_dir: output
