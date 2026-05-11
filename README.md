@@ -49,11 +49,15 @@ See [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md) for the original design brief and l
 
 ## Use the Claude Code skills
 
-The repo ships with three skills under `.claude/skills/`. They are auto-discovered by Claude Code when you `cd` into this repo. Run them from inside a Claude Code session:
+The repo ships with three skills under `.claude/skills/` and matching slash commands under `.claude/commands/`. Both are auto-discovered by Claude Code when you `cd` into this repo.
 
-- `/analyze-stock NVDA` — quick fundamental deep-dive (business, valuation, financial health, growth, risks, bull/bear, bottom line). ~5–10 min.
-- `/why-fell NET` — explains a recent drop using a web search across the last 5 trading days, framed by recent 4h price/RSI action. ~3–5 min.
-- `/equity-research NVDA` — **full professional research report**: executive summary with rating and target range, multi-year financials review, peer comparables table, capital allocation analysis, catalyst calendar, three-scenario valuation (bull/base/bear), technical context, insider/institutional activity, and explicit position-sizing guidance. Saves to `output/research/{TICKER}-{date}.md`. ~10–20 min.
+| Skill | Slash command | Natural language | Output | Time |
+|---|---|---|---|---|
+| analyze-stock | `/analyze-stock NVDA` | "analyze NVDA" | Quick fundamental deep-dive in chat | 3-7 min |
+| why-fell | `/why-fell NET` | "why did NET fall" | 2-3 paragraph cause note in chat | 3-5 min |
+| equity-research | `/equity-research NVDA` | "do a full equity research report on NVDA" | Full sell-side report saved to `output/research/{TICKER}-{date}.md` | 5-10 min |
+
+Either invocation pattern works — slash commands are the explicit version; natural-language phrases trigger the skills automatically.
 
 To make them globally available across all your Claude Code sessions:
 
@@ -91,10 +95,14 @@ python3 -m venv .venv
 ```
 rsi-scanner/
 ├── .github/workflows/daily-scan.yml   # GH Actions cron + Pages deploy
-├── .claude/skills/
-│   ├── analyze-stock/SKILL.md         # local Claude Code skill: quick fundamental deep-dive
-│   ├── why-fell/SKILL.md              # local Claude Code skill: news-driven cause
-│   └── equity-research/SKILL.md       # local Claude Code skill: full sell-side research report
+├── .claude/skills/                    # auto-invoked by natural language
+│   ├── analyze-stock/SKILL.md         # quick fundamental deep-dive
+│   ├── why-fell/SKILL.md              # news-driven cause analysis
+│   └── equity-research/SKILL.md       # full sell-side research report
+├── .claude/commands/                  # explicit slash commands /<name> ARGS
+│   ├── analyze-stock.md
+│   ├── why-fell.md
+│   └── equity-research.md
 ├── config/
 │   ├── universe.yaml                  # 48 tickers in 12 subcategories
 │   └── settings.yaml                  # thresholds, periods, paths
