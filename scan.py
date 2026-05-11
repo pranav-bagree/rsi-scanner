@@ -15,6 +15,7 @@ import sys
 import traceback
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import yaml
@@ -224,7 +225,9 @@ def main():
 
     # --- Render ---
     print(f"[4/4] Rendering dashboard...")
-    now = datetime.now()
+    now_utc = datetime.now(tz=ZoneInfo("UTC"))
+    now_et = now_utc.astimezone(ZoneInfo("America/New_York"))
+    now_pt = now_utc.astimezone(ZoneInfo("America/Los_Angeles"))
     latest_ts = max((r["last_bar_ts"] for r in all_rows if r.get("last_bar_ts") is not None), default=None)
 
     rendered_hits = []
@@ -278,8 +281,9 @@ def main():
 
     context = {
         "title": settings["dashboard"]["title"],
-        "run_ts_human": now.strftime("%Y-%m-%d %H:%M ET"),
-        "run_ts_iso": now.isoformat(timespec="seconds"),
+        "run_ts_human_et": now_et.strftime("%Y-%m-%d %H:%M") + " ET",
+        "run_ts_human_pt": now_pt.strftime("%H:%M") + " PT",
+        "run_ts_iso": now_utc.isoformat(timespec="seconds"),
         "latest_bar_human": latest_ts.strftime("%Y-%m-%d %H:%M ET") if latest_ts is not None else "—",
         "universe_size": len(flat),
         "oversold_threshold": settings["rsi"]["oversold_threshold"],
