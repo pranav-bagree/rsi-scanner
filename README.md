@@ -49,10 +49,11 @@ See [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md) for the original design brief and l
 
 ## Use the Claude Code skills
 
-The repo ships with two skills under `.claude/skills/`. They are auto-discovered by Claude Code when you `cd` into this repo. Run them from inside a Claude Code session:
+The repo ships with three skills under `.claude/skills/`. They are auto-discovered by Claude Code when you `cd` into this repo. Run them from inside a Claude Code session:
 
-- `/analyze-stock NVDA` — produces a thorough fundamental deep-dive (business, valuation, financial health, growth, risks, bull/bear, bottom line) using yfinance data.
-- `/why-fell NET` — explains a recent drop using a web search across the last 5 trading days, framed by recent 4h price/RSI action.
+- `/analyze-stock NVDA` — quick fundamental deep-dive (business, valuation, financial health, growth, risks, bull/bear, bottom line). ~5–10 min.
+- `/why-fell NET` — explains a recent drop using a web search across the last 5 trading days, framed by recent 4h price/RSI action. ~3–5 min.
+- `/equity-research NVDA` — **full professional research report**: executive summary with rating and target range, multi-year financials review, peer comparables table, capital allocation analysis, catalyst calendar, three-scenario valuation (bull/base/bear), technical context, insider/institutional activity, and explicit position-sizing guidance. Saves to `output/research/{TICKER}-{date}.md`. ~10–20 min.
 
 To make them globally available across all your Claude Code sessions:
 
@@ -91,8 +92,9 @@ python3 -m venv .venv
 rsi-scanner/
 ├── .github/workflows/daily-scan.yml   # GH Actions cron + Pages deploy
 ├── .claude/skills/
-│   ├── analyze-stock/SKILL.md         # local Claude Code skill: fundamental deep-dive
-│   └── why-fell/SKILL.md              # local Claude Code skill: news-driven cause
+│   ├── analyze-stock/SKILL.md         # local Claude Code skill: quick fundamental deep-dive
+│   ├── why-fell/SKILL.md              # local Claude Code skill: news-driven cause
+│   └── equity-research/SKILL.md       # local Claude Code skill: full sell-side research report
 ├── config/
 │   ├── universe.yaml                  # 48 tickers in 12 subcategories
 │   └── settings.yaml                  # thresholds, periods, paths
@@ -100,8 +102,9 @@ rsi-scanner/
 │   ├── fetch_prices.py                # batched yfinance 4h pulls
 │   ├── compute_rsi.py                 # Wilder RSI
 │   ├── render_dashboard.py            # Jinja2 -> HTML
+│   ├── equity_research.py             # comprehensive ticker snapshot (used by /equity-research)
 │   ├── why_it_fell.py                 # (unused in CI — kept for reference / API-key path)
-│   └── deep_dive.py                   # gather_fundamentals() is reused by the skills
+│   └── deep_dive.py                   # gather_fundamentals() reused by /analyze-stock skill
 ├── templates/dashboard.html.j2
 ├── public/                            # built by GH Actions for Pages (also writable locally)
 ├── output/                            # local scan outputs (gitignored)

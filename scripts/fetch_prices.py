@@ -23,9 +23,10 @@ def fetch_4h_bars(tickers: list[str], period: str = "3mo") -> dict[str, pd.DataF
     )
 
     out: dict[str, pd.DataFrame] = {}
+    is_multi = isinstance(raw.columns, pd.MultiIndex)
     for t in tickers:
         try:
-            df = raw[t].copy() if len(tickers) > 1 else raw.copy()
+            df = raw[t].copy() if is_multi else raw.copy()
         except KeyError:
             continue
         df = df.dropna(how="all")
