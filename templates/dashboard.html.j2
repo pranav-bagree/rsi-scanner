@@ -219,6 +219,10 @@
   details.full-scan .rsi-cell.watch { color: var(--warn); font-weight: 500; }
   details.full-scan .change-pos { color: var(--ok); }
   details.full-scan .change-neg { color: var(--alert); }
+  /* Live (in-progress) values: subtle column tint and italic so they read as preliminary */
+  details.full-scan .live-cell { background: rgba(124,138,255,0.04); }
+  details.full-scan .live-cell.live-on { background: rgba(124,138,255,0.10); font-style: italic; }
+  details.full-scan .live-cell.live-on::before { content: "● "; color: var(--accent); font-size: 9px; vertical-align: middle; }
 
   /* Collapsible fundamentals columns */
   .fund-col { display: none; }
@@ -260,7 +264,10 @@
       <div class="meta">
         Scan run <span class="mono">{{ run_ts_human_pt }}</span> ·
         <span class="mono">{{ universe_size }}</span> tickers ·
-        most recent closed 4h bar: <span class="mono">{{ latest_bar_human }}</span>
+        last closed 4h bar: <span class="mono">{{ latest_bar_human }}</span>
+        {% if has_live %}·
+          live (in-progress) bar: <span class="mono">{{ live_bar_human }}</span>
+        {% endif %}
       </div>
     </div>
   </header>
@@ -390,8 +397,10 @@
             <th>Company</th>
             <th>Sector</th>
             <th class="numeric">Price</th>
+            <th class="numeric">Live Price</th>
             <th class="numeric">Bar change</th>
             <th class="numeric">RSI(14)</th>
+            <th class="numeric" title="What RSI(14) would be if the in-progress 4h bar closed at its current price">Live RSI</th>
             <th class="fund-col numeric">Mkt Cap</th>
             <th class="fund-col numeric">P/E</th>
             <th class="fund-col numeric">PEG</th>
@@ -405,12 +414,20 @@
               <td>{{ r.company }}</td>
               <td class="sector">{{ r.sector }}</td>
               <td class="numeric">{% if r.price is not none %}${{ "%.2f"|format(r.price) }}{% else %}—{% endif %}</td>
+              <td class="numeric live-cell {% if r.is_live %}live-on{% endif %}">
+                {% if r.live_price is not none %}${{ "%.2f"|format(r.live_price) }}{% else %}—{% endif %}
+              </td>
               <td class="numeric {% if r.bar_change_pct is not none and r.bar_change_pct >= 0 %}change-pos{% elif r.bar_change_pct is not none %}change-neg{% endif %}">
                 {% if r.bar_change_pct is not none %}{{ "%+.2f"|format(r.bar_change_pct) }}%{% else %}—{% endif %}
               </td>
               <td class="numeric">
                 {% if r.rsi is not none %}
                   <span class="rsi-cell {% if r.status == 'oversold' %}oversold{% elif r.status == 'watch' %}watch{% endif %}">{{ "%.2f"|format(r.rsi) }}</span>
+                {% else %}—{% endif %}
+              </td>
+              <td class="numeric live-cell {% if r.is_live %}live-on{% endif %}">
+                {% if r.live_rsi is not none %}
+                  <span class="rsi-cell {% if r.live_rsi < oversold_threshold %}oversold{% elif r.live_rsi < watch_threshold %}watch{% endif %}">{{ "%.2f"|format(r.live_rsi) }}</span>
                 {% else %}—{% endif %}
               </td>
               <td class="fund-col numeric">{{ r.market_cap | fmt_market_cap }}</td>

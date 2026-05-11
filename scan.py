@@ -52,31 +52,39 @@ def flatten_universe(universe: dict) -> list[dict]:
 
 def build_scan_rows(
     flat_universe: list[dict],
-    price_data: dict[str, pd.DataFrame],
+    price_data: dict[str, dict],
     *,
     oversold: float,
     watch: float,
 ) -> tuple[list[dict], list[dict], list[dict]]:
-    """Returns (all_rows, hits, watch_list). Rows sorted by RSI ascending."""
+    """Returns (all_rows, hits, watch_list).
+
+    `price_data` is a dict {ticker -> {"closed": df_with_rsi, "live": df_with_rsi}}.
+    'closed' has the in-progress bar dropped (signal source). 'live' includes the
+    in-progress bar if one exists, for the "what RSI would be if bar closed now" view.
+    """
     all_rows: list[dict] = []
     for u in flat_universe:
         t = u["ticker"]
-        df = price_data.get(t)
-        if df is None or df.empty or "RSI_14" not in df.columns:
+        bundle = price_data.get(t)
+        if bundle is None:
             all_rows.append(
                 {
                     "ticker": t, "company": u["name"], "sector": u["sector"],
                     "price": None, "rsi": None, "bar_change_pct": None,
+                    "live_price": None, "live_rsi": None, "live_bar_ts": None, "is_live": False,
                     "status": "error", "df": None,
                 }
             )
             continue
-        df_rsi = df.dropna(subset=["RSI_14"])
-        if df_rsi.empty:
+        df = bundle["closed"]
+        df_rsi = df.dropna(subset=["RSI_14"]) if df is not None and "RSI_14" in df.columns else None
+        if df_rsi is None or df_rsi.empty:
             all_rows.append(
                 {
                     "ticker": t, "company": u["name"], "sector": u["sector"],
                     "price": None, "rsi": None, "bar_change_pct": None,
+                    "live_price": None, "live_rsi": None, "live_bar_ts": None, "is_live": False,
                     "status": "error", "df": None,
                 }
             )
@@ -86,6 +94,23 @@ def build_scan_rows(
         change = ((last["Close"] - prev["Close"]) / prev["Close"] * 100) if prev is not None else None
         rsi = float(last["RSI_14"])
         status = "oversold" if rsi < oversold else "watch" if rsi < watch else "ok"
+
+        # Live view: most recent bar from the in-progress-included series.
+        live_df = bundle.get("live")
+        live_rsi_series = live_df.dropna(subset=["RSI_14"]) if live_df is not None and "RSI_14" in live_df.columns else None
+        if live_rsi_series is not None and not live_rsi_series.empty:
+            live_last = live_rsi_series.iloc[-1]
+            live_rsi_val = float(live_last["RSI_14"])
+            live_price_val = float(live_last["Close"])
+            live_ts = live_rsi_series.index[-1]
+            # is_live = the live bar is newer than the most recent closed bar
+            is_live = live_ts > df_rsi.index[-1]
+        else:
+            live_rsi_val = rsi
+            live_price_val = float(last["Close"])
+            live_ts = df_rsi.index[-1]
+            is_live = False
+
         all_rows.append(
             {
                 "ticker": t,
@@ -94,6 +119,10 @@ def build_scan_rows(
                 "price": float(last["Close"]),
                 "rsi": rsi,
                 "bar_change_pct": float(change) if change is not None else None,
+                "live_price": live_price_val,
+                "live_rsi": live_rsi_val,
+                "live_bar_ts": live_ts,
+                "is_live": is_live,
                 "status": status,
                 "last_bar_ts": df_rsi.index[-1],
                 "df": df,
@@ -178,13 +207,19 @@ def main():
     print(f"[1/4] Fetching 4h bars for {len(tickers)} tickers...")
     raw = fetch_4h_bars(tickers, period=settings["prices"]["period"])
 
-    print(f"[2/4] Computing RSI...")
-    price_data: dict[str, pd.DataFrame] = {}
-    for t, df in raw.items():
-        df = drop_in_progress_bar(df)
-        if df.empty:
+    print(f"[2/4] Computing RSI (closed + live views)...")
+    period = settings["rsi"]["period"]
+    price_data: dict[str, dict] = {}
+    for t, df_raw in raw.items():
+        if df_raw is None or df_raw.empty:
             continue
-        price_data[t] = attach_rsi(df, period=settings["rsi"]["period"])
+        df_closed = drop_in_progress_bar(df_raw)
+        if df_closed.empty:
+            continue
+        price_data[t] = {
+            "closed": attach_rsi(df_closed, period=period),
+            "live": attach_rsi(df_raw, period=period),
+        }
 
     all_rows, hits, watch_list = build_scan_rows(
         flat, price_data,
@@ -283,11 +318,18 @@ def main():
     rsi_values = [r["rsi"] for r in all_rows if r["rsi"] is not None]
     median_rsi = statistics.median(rsi_values) if rsi_values else None
 
+    # Live bar timestamp: the most recent in-progress bar across all tickers
+    live_ts_candidates = [r["live_bar_ts"] for r in all_rows if r.get("is_live") and r.get("live_bar_ts") is not None]
+    live_bar_ts = max(live_ts_candidates) if live_ts_candidates else None
+    has_live = live_bar_ts is not None
+
     context = {
         "title": settings["dashboard"]["title"],
         "run_ts_human_pt": now_pt.strftime("%Y-%m-%d %H:%M") + " PT",
         "run_ts_iso": now_utc.isoformat(timespec="seconds"),
         "latest_bar_human": latest_ts.tz_convert(PT).strftime("%Y-%m-%d %H:%M PT") if latest_ts is not None else "—",
+        "live_bar_human": live_bar_ts.tz_convert(PT).strftime("%Y-%m-%d %H:%M PT") if live_bar_ts is not None else None,
+        "has_live": has_live,
         "universe_size": len(flat),
         "oversold_threshold": settings["rsi"]["oversold_threshold"],
         "watch_threshold": settings["rsi"]["watch_threshold"],
@@ -302,6 +344,9 @@ def main():
                 "price": r["price"],
                 "rsi": r["rsi"],
                 "bar_change_pct": r["bar_change_pct"],
+                "live_price": r.get("live_price"),
+                "live_rsi": r.get("live_rsi"),
+                "is_live": r.get("is_live", False),
                 "status": r["status"],
                 "market_cap": inline_fund.get(r["ticker"], {}).get("market_cap"),
                 "pe": inline_fund.get(r["ticker"], {}).get("trailing_pe"),
