@@ -230,8 +230,8 @@ def main():
     # --- Render ---
     print(f"[4/4] Rendering dashboard...")
     now_utc = datetime.now(tz=ZoneInfo("UTC"))
-    now_et = now_utc.astimezone(ZoneInfo("America/New_York"))
     now_pt = now_utc.astimezone(ZoneInfo("America/Los_Angeles"))
+    PT = ZoneInfo("America/Los_Angeles")
     latest_ts = max((r["last_bar_ts"] for r in all_rows if r.get("last_bar_ts") is not None), default=None)
 
     rendered_hits = []
@@ -263,7 +263,7 @@ def main():
                 "price": h["price"],
                 "rsi": h["rsi"],
                 "move_5bar_pct": float(move_5bar),
-                "bar_human": h["last_bar_ts"].strftime("%Y-%m-%d %H:%M ET"),
+                "bar_human": h["last_bar_ts"].tz_convert(PT).strftime("%Y-%m-%d %H:%M PT"),
                 "why_it_fell_html": md_to_html(a.get("why_it_fell") or ""),
                 "why_it_fell_citations": a.get("why_it_fell_citations", []),
                 "why_it_fell_skip_reason": skip_msg_why,
@@ -285,10 +285,9 @@ def main():
 
     context = {
         "title": settings["dashboard"]["title"],
-        "run_ts_human_et": now_et.strftime("%Y-%m-%d %H:%M") + " ET",
-        "run_ts_human_pt": now_pt.strftime("%H:%M") + " PT",
+        "run_ts_human_pt": now_pt.strftime("%Y-%m-%d %H:%M") + " PT",
         "run_ts_iso": now_utc.isoformat(timespec="seconds"),
-        "latest_bar_human": latest_ts.strftime("%Y-%m-%d %H:%M ET") if latest_ts is not None else "—",
+        "latest_bar_human": latest_ts.tz_convert(PT).strftime("%Y-%m-%d %H:%M PT") if latest_ts is not None else "—",
         "universe_size": len(flat),
         "oversold_threshold": settings["rsi"]["oversold_threshold"],
         "watch_threshold": settings["rsi"]["watch_threshold"],

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI Infra — 4h RSI Scanner — 2026-05-11 02:03 ET</title>
+<title>AI Infra — 4h RSI Scanner — 2026-05-11 09:02 PT</title>
 <style>
   :root {
     --bg: #0a0e1a;
@@ -158,6 +158,7 @@
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: 10px; user-select: none;
     color: var(--text-muted); font-size: 14px;
+    display: flex; align-items: center;
   }
   details.full-scan[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
   .scan-search {
@@ -208,6 +209,7 @@
     background: var(--bg-card-soft);
   }
   details.full-scan td.numeric { text-align: right; font-variant-numeric: tabular-nums; }
+  details.full-scan th.numeric { text-align: right; }
   details.full-scan td.ticker { font-weight: 600; }
   details.full-scan td.sector { color: var(--text-muted); font-size: 12px; }
   details.full-scan tr.row-oversold td { background: var(--alert-soft); }
@@ -217,6 +219,22 @@
   details.full-scan .rsi-cell.watch { color: var(--warn); font-weight: 500; }
   details.full-scan .change-pos { color: var(--ok); }
   details.full-scan .change-neg { color: var(--alert); }
+
+  /* Collapsible fundamentals columns */
+  .fund-col { display: none; }
+  .show-fundamentals .fund-col { display: table-cell; }
+  .toggle-fund-btn {
+    margin-left: auto;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-card-soft);
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .toggle-fund-btn:hover { color: var(--text); border-color: var(--accent); }
 
   .empty-state {
     background: var(--bg-card); border: 1px solid var(--border);
@@ -240,9 +258,9 @@
     <div>
       <h1>AI Infra — 4h RSI Scanner</h1>
       <div class="meta">
-        Scan run <span class="mono">2026-05-11 02:03 ET</span> ·
+        Scan run <span class="mono">2026-05-11 09:02 PT</span> ·
         <span class="mono">79</span> tickers ·
-        most recent closed 4h bar: <span class="mono">2026-05-08 13:30 ET</span>
+        most recent closed 4h bar: <span class="mono">2026-05-08 10:30 PT</span>
       </div>
     </div>
   </header>
@@ -298,7 +316,7 @@
               <div class="company">NRG Energy</div>
             </div>
             <div class="rhs">
-              <div class="rsi-val">30.2</div>
+              <div class="rsi-val">30.3</div>
               <div class="price">$138.05</div>
             </div>
           </div>
@@ -376,7 +394,10 @@
   <section>
     <h2>Full scan <span class="count">79</span></h2>
     <details class="full-scan" open>
-      <summary>Show all 79 tickers</summary>
+      <summary>
+        Show all 79 tickers
+        <button class="toggle-fund-btn" onclick="toggleFundamentals(event, this)">+ Fundamentals</button>
+      </summary>
       <div class="scan-search">
         <input type="text" id="scan-search-input" placeholder="Filter by ticker, company, or sector..." autocomplete="off" spellcheck="false">
         <span class="visible-count" id="scan-visible-count">79 of 79</span>
@@ -390,6 +411,10 @@
             <th class="numeric">Price</th>
             <th class="numeric">Bar change</th>
             <th class="numeric">RSI(14)</th>
+            <th class="fund-col numeric">Mkt Cap</th>
+            <th class="fund-col numeric">P/E</th>
+            <th class="fund-col numeric">PEG</th>
+            <th class="fund-col numeric">Beta</th>
           </tr>
         </thead>
         <tbody>
@@ -407,6 +432,10 @@
                   <span class="rsi-cell ">45.06</span>
                 
               </td>
+              <td class="fund-col numeric">$14.7B</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">0.78</td>
+              <td class="fund-col numeric">3.76</td>
             </tr>
           
             <tr class="" data-search="adbe adobe tech saas — enterprise software">
@@ -422,6 +451,10 @@
                   <span class="rsi-cell ">55.20</span>
                 
               </td>
+              <td class="fund-col numeric">$99.8B</td>
+              <td class="fund-col numeric">14.4</td>
+              <td class="fund-col numeric">0.72</td>
+              <td class="fund-col numeric">1.42</td>
             </tr>
           
             <tr class="" data-search="adsk autodesk tech saas — vertical saas">
@@ -437,6 +470,10 @@
                   <span class="rsi-cell ">52.14</span>
                 
               </td>
+              <td class="fund-col numeric">$50.3B</td>
+              <td class="fund-col numeric">45.5</td>
+              <td class="fund-col numeric">0.95</td>
+              <td class="fund-col numeric">1.32</td>
             </tr>
           
             <tr class="" data-search="akam akamai tech saas — cloud infra / cdn">
@@ -452,6 +489,10 @@
                   <span class="rsi-cell ">82.13</span>
                 
               </td>
+              <td class="fund-col numeric">$22.3B</td>
+              <td class="fund-col numeric">51.7</td>
+              <td class="fund-col numeric">1.70</td>
+              <td class="fund-col numeric">0.45</td>
             </tr>
           
             <tr class="" data-search="alab astera labs ai networking & interconnect">
@@ -467,6 +508,10 @@
                   <span class="rsi-cell ">53.74</span>
                 
               </td>
+              <td class="fund-col numeric">$35.3B</td>
+              <td class="fund-col numeric">139.1</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">3.36</td>
             </tr>
           
             <tr class="" data-search="almu aeluma optical supporting components">
@@ -482,6 +527,10 @@
                   <span class="rsi-cell ">56.34</span>
                 
               </td>
+              <td class="fund-col numeric">$519M</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">-0.09</td>
             </tr>
           
             <tr class="" data-search="amd advanced micro devices ai compute / gpus / accelerators">
@@ -497,6 +546,10 @@
                   <span class="rsi-cell ">80.80</span>
                 
               </td>
+              <td class="fund-col numeric">$758.5B</td>
+              <td class="fund-col numeric">155.1</td>
+              <td class="fund-col numeric">1.10</td>
+              <td class="fund-col numeric">2.40</td>
             </tr>
           
             <tr class="" data-search="amzn amazon hyperscalers / cloud platforms">
@@ -512,6 +565,10 @@
                   <span class="rsi-cell ">66.60</span>
                 
               </td>
+              <td class="fund-col numeric">$2.9T</td>
+              <td class="fund-col numeric">32.6</td>
+              <td class="fund-col numeric">1.89</td>
+              <td class="fund-col numeric">1.47</td>
             </tr>
           
             <tr class="row-watch" data-search="anet arista networks ai networking & interconnect">
@@ -527,6 +584,10 @@
                   <span class="rsi-cell watch">34.65</span>
                 
               </td>
+              <td class="fund-col numeric">$173.1B</td>
+              <td class="fund-col numeric">47.3</td>
+              <td class="fund-col numeric">1.82</td>
+              <td class="fund-col numeric">1.67</td>
             </tr>
           
             <tr class="row-watch" data-search="aph amphenol ai networking & interconnect">
@@ -539,9 +600,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell watch">26.91</span>
+                  <span class="rsi-cell watch">26.92</span>
                 
               </td>
+              <td class="fund-col numeric">$153.3B</td>
+              <td class="fund-col numeric">35.8</td>
+              <td class="fund-col numeric">1.10</td>
+              <td class="fund-col numeric">1.30</td>
             </tr>
           
             <tr class="" data-search="apld applied digital data center operators">
@@ -554,9 +619,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">65.07</span>
+                  <span class="rsi-cell ">65.08</span>
                 
               </td>
+              <td class="fund-col numeric">$13.0B</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">1.83</td>
+              <td class="fund-col numeric">5.70</td>
             </tr>
           
             <tr class="" data-search="avgo broadcom custom silicon / asics">
@@ -572,6 +641,10 @@
                   <span class="rsi-cell ">61.12</span>
                 
               </td>
+              <td class="fund-col numeric">$2.0T</td>
+              <td class="fund-col numeric">83.9</td>
+              <td class="fund-col numeric">0.94</td>
+              <td class="fund-col numeric">1.44</td>
             </tr>
           
             <tr class="" data-search="cdns cadence design systems ai eda & design tools">
@@ -587,6 +660,10 @@
                   <span class="rsi-cell ">72.84</span>
                 
               </td>
+              <td class="fund-col numeric">$99.7B</td>
+              <td class="fund-col numeric">84.5</td>
+              <td class="fund-col numeric">3.44</td>
+              <td class="fund-col numeric">1.13</td>
             </tr>
           
             <tr class="" data-search="ceg constellation energy ai energy">
@@ -602,6 +679,10 @@
                   <span class="rsi-cell ">45.67</span>
                 
               </td>
+              <td class="fund-col numeric">$108.1B</td>
+              <td class="fund-col numeric">40.3</td>
+              <td class="fund-col numeric">3.74</td>
+              <td class="fund-col numeric">1.16</td>
             </tr>
           
             <tr class="" data-search="cien ciena ai networking & interconnect">
@@ -617,6 +698,10 @@
                   <span class="rsi-cell ">56.98</span>
                 
               </td>
+              <td class="fund-col numeric">$83.2B</td>
+              <td class="fund-col numeric">370.2</td>
+              <td class="fund-col numeric">2.29</td>
+              <td class="fund-col numeric">1.25</td>
             </tr>
           
             <tr class="" data-search="cme cme group fintech — exchanges & financial data">
@@ -629,9 +714,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">36.41</span>
+                  <span class="rsi-cell ">36.39</span>
                 
               </td>
+              <td class="fund-col numeric">$102.0B</td>
+              <td class="fund-col numeric">24.0</td>
+              <td class="fund-col numeric">4.76</td>
+              <td class="fund-col numeric">0.26</td>
             </tr>
           
             <tr class="" data-search="cohr coherent optical devices">
@@ -647,6 +736,10 @@
                   <span class="rsi-cell ">55.32</span>
                 
               </td>
+              <td class="fund-col numeric">$74.6B</td>
+              <td class="fund-col numeric">180.8</td>
+              <td class="fund-col numeric">0.92</td>
+              <td class="fund-col numeric">2.05</td>
             </tr>
           
             <tr class="" data-search="coin coinbase fintech — digital brokers & neobanks">
@@ -662,6 +755,10 @@
                   <span class="rsi-cell ">56.55</span>
                 
               </td>
+              <td class="fund-col numeric">$55.0B</td>
+              <td class="fund-col numeric">76.8</td>
+              <td class="fund-col numeric">0.77</td>
+              <td class="fund-col numeric">3.38</td>
             </tr>
           
             <tr class="" data-search="crdo credo ai networking & interconnect">
@@ -677,6 +774,10 @@
                   <span class="rsi-cell ">57.38</span>
                 
               </td>
+              <td class="fund-col numeric">$38.2B</td>
+              <td class="fund-col numeric">113.2</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">3.18</td>
             </tr>
           
             <tr class="" data-search="crm salesforce tech saas — enterprise software">
@@ -692,6 +793,10 @@
                   <span class="rsi-cell ">48.95</span>
                 
               </td>
+              <td class="fund-col numeric">$145.9B</td>
+              <td class="fund-col numeric">22.9</td>
+              <td class="fund-col numeric">0.99</td>
+              <td class="fund-col numeric">1.14</td>
             </tr>
           
             <tr class="" data-search="crwd crowdstrike tech saas — cybersecurity">
@@ -707,6 +812,10 @@
                   <span class="rsi-cell ">79.48</span>
                 
               </td>
+              <td class="fund-col numeric">$135.6B</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">4.35</td>
+              <td class="fund-col numeric">1.06</td>
             </tr>
           
             <tr class="" data-search="crwv coreweave data center operators">
@@ -722,6 +831,10 @@
                   <span class="rsi-cell ">45.66</span>
                 
               </td>
+              <td class="fund-col numeric">$61.8B</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">—</td>
             </tr>
           
             <tr class="" data-search="csco cisco ai networking & interconnect">
@@ -737,6 +850,10 @@
                   <span class="rsi-cell ">71.28</span>
                 
               </td>
+              <td class="fund-col numeric">$387.7B</td>
+              <td class="fund-col numeric">35.3</td>
+              <td class="fund-col numeric">1.49</td>
+              <td class="fund-col numeric">0.91</td>
             </tr>
           
             <tr class="" data-search="ddog datadog tech saas — data & analytics">
@@ -752,6 +869,10 @@
                   <span class="rsi-cell ">90.36</span>
                 
               </td>
+              <td class="fund-col numeric">$71.8B</td>
+              <td class="fund-col numeric">530.8</td>
+              <td class="fund-col numeric">1.50</td>
+              <td class="fund-col numeric">1.29</td>
             </tr>
           
             <tr class="" data-search="dell dell technologies ai servers & systems">
@@ -767,6 +888,10 @@
                   <span class="rsi-cell ">79.91</span>
                 
               </td>
+              <td class="fund-col numeric">$161.9B</td>
+              <td class="fund-col numeric">28.7</td>
+              <td class="fund-col numeric">1.08</td>
+              <td class="fund-col numeric">1.06</td>
             </tr>
           
             <tr class="" data-search="dlr digital realty data center operators">
@@ -782,6 +907,10 @@
                   <span class="rsi-cell ">46.93</span>
                 
               </td>
+              <td class="fund-col numeric">$70.5B</td>
+              <td class="fund-col numeric">52.3</td>
+              <td class="fund-col numeric">13.17</td>
+              <td class="fund-col numeric">1.08</td>
             </tr>
           
             <tr class="" data-search="eqix equinix data center operators">
@@ -797,6 +926,10 @@
                   <span class="rsi-cell ">47.38</span>
                 
               </td>
+              <td class="fund-col numeric">$107.8B</td>
+              <td class="fund-col numeric">75.5</td>
+              <td class="fund-col numeric">3.52</td>
+              <td class="fund-col numeric">1.00</td>
             </tr>
           
             <tr class="row-watch" data-search="fis fidelity national is fintech — payment processors">
@@ -809,9 +942,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell watch">33.10</span>
+                  <span class="rsi-cell watch">33.09</span>
                 
               </td>
+              <td class="fund-col numeric">$21.8B</td>
+              <td class="fund-col numeric">57.7</td>
+              <td class="fund-col numeric">0.24</td>
+              <td class="fund-col numeric">0.83</td>
             </tr>
           
             <tr class="row-watch" data-search="fisv fiserv fintech — payment processors">
@@ -824,9 +961,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell watch">32.17</span>
+                  <span class="rsi-cell watch">32.16</span>
                 
               </td>
+              <td class="fund-col numeric">$29.2B</td>
+              <td class="fund-col numeric">9.3</td>
+              <td class="fund-col numeric">0.91</td>
+              <td class="fund-col numeric">—</td>
             </tr>
           
             <tr class="" data-search="fn fabrinet optical supporting components">
@@ -842,6 +983,10 @@
                   <span class="rsi-cell ">41.10</span>
                 
               </td>
+              <td class="fund-col numeric">$23.7B</td>
+              <td class="fund-col numeric">56.9</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">1.22</td>
             </tr>
           
             <tr class="" data-search="ftnt fortinet tech saas — cybersecurity">
@@ -857,6 +1002,10 @@
                   <span class="rsi-cell ">88.46</span>
                 
               </td>
+              <td class="fund-col numeric">$83.8B</td>
+              <td class="fund-col numeric">44.4</td>
+              <td class="fund-col numeric">2.56</td>
+              <td class="fund-col numeric">0.92</td>
             </tr>
           
             <tr class="" data-search="glxy galaxy digital data center operators">
@@ -869,9 +1018,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">63.45</span>
+                  <span class="rsi-cell ">63.46</span>
                 
               </td>
+              <td class="fund-col numeric">$12.1B</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">3.65</td>
             </tr>
           
             <tr class="" data-search="googl alphabet hyperscalers / cloud platforms">
@@ -887,6 +1040,10 @@
                   <span class="rsi-cell ">84.41</span>
                 
               </td>
+              <td class="fund-col numeric">$4.8T</td>
+              <td class="fund-col numeric">30.1</td>
+              <td class="fund-col numeric">1.58</td>
+              <td class="fund-col numeric">1.27</td>
             </tr>
           
             <tr class="" data-search="gpn global payments fintech — payment processors">
@@ -899,9 +1056,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">46.21</span>
+                  <span class="rsi-cell ">46.22</span>
                 
               </td>
+              <td class="fund-col numeric">$18.9B</td>
+              <td class="fund-col numeric">28.6</td>
+              <td class="fund-col numeric">0.20</td>
+              <td class="fund-col numeric">0.76</td>
             </tr>
           
             <tr class="" data-search="hood robinhood fintech — digital brokers & neobanks">
@@ -914,9 +1075,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">47.85</span>
+                  <span class="rsi-cell ">47.86</span>
                 
               </td>
+              <td class="fund-col numeric">$71.0B</td>
+              <td class="fund-col numeric">38.3</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">2.29</td>
             </tr>
           
             <tr class="" data-search="hpe hewlett packard enterprise ai servers & systems">
@@ -932,6 +1097,10 @@
                   <span class="rsi-cell ">72.85</span>
                 
               </td>
+              <td class="fund-col numeric">$41.2B</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">0.85</td>
+              <td class="fund-col numeric">1.29</td>
             </tr>
           
             <tr class="row-watch" data-search="hubs hubspot tech saas — productivity">
@@ -944,9 +1113,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell watch">33.95</span>
+                  <span class="rsi-cell watch">33.96</span>
                 
               </td>
+              <td class="fund-col numeric">$9.9B</td>
+              <td class="fund-col numeric">101.8</td>
+              <td class="fund-col numeric">0.32</td>
+              <td class="fund-col numeric">1.23</td>
             </tr>
           
             <tr class="" data-search="ice intercontinental exchange fintech — exchanges & financial data">
@@ -959,9 +1132,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">46.51</span>
+                  <span class="rsi-cell ">46.49</span>
                 
               </td>
+              <td class="fund-col numeric">$88.5B</td>
+              <td class="fund-col numeric">22.8</td>
+              <td class="fund-col numeric">2.16</td>
+              <td class="fund-col numeric">0.96</td>
             </tr>
           
             <tr class="" data-search="intc intel ai compute / gpus / accelerators">
@@ -977,6 +1154,10 @@
                   <span class="rsi-cell ">80.58</span>
                 
               </td>
+              <td class="fund-col numeric">$640.2B</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">1.36</td>
+              <td class="fund-col numeric">2.19</td>
             </tr>
           
             <tr class="" data-search="intu intuit tech saas — enterprise software">
@@ -992,6 +1173,10 @@
                   <span class="rsi-cell ">49.62</span>
                 
               </td>
+              <td class="fund-col numeric">$109.2B</td>
+              <td class="fund-col numeric">25.5</td>
+              <td class="fund-col numeric">1.02</td>
+              <td class="fund-col numeric">1.03</td>
             </tr>
           
             <tr class="" data-search="iren iris energy ai energy">
@@ -1007,6 +1192,10 @@
                   <span class="rsi-cell ">69.75</span>
                 
               </td>
+              <td class="fund-col numeric">$19.3B</td>
+              <td class="fund-col numeric">40.5</td>
+              <td class="fund-col numeric">3.11</td>
+              <td class="fund-col numeric">4.18</td>
             </tr>
           
             <tr class="" data-search="lasr nlight optical devices">
@@ -1022,6 +1211,10 @@
                   <span class="rsi-cell ">59.24</span>
                 
               </td>
+              <td class="fund-col numeric">$4.6B</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">1.78</td>
+              <td class="fund-col numeric">2.33</td>
             </tr>
           
             <tr class="" data-search="lite lumentum optical devices">
@@ -1034,9 +1227,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">50.58</span>
+                  <span class="rsi-cell ">50.59</span>
                 
               </td>
+              <td class="fund-col numeric">$82.4B</td>
+              <td class="fund-col numeric">186.1</td>
+              <td class="fund-col numeric">0.63</td>
+              <td class="fund-col numeric">1.53</td>
             </tr>
           
             <tr class="" data-search="lpth lightpath optical supporting components">
@@ -1052,6 +1249,10 @@
                   <span class="rsi-cell ">41.87</span>
                 
               </td>
+              <td class="fund-col numeric">$736M</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">1.54</td>
+              <td class="fund-col numeric">—</td>
             </tr>
           
             <tr class="" data-search="meta meta platforms hyperscalers / cloud platforms">
@@ -1064,9 +1265,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">37.95</span>
+                  <span class="rsi-cell ">37.96</span>
                 
               </td>
+              <td class="fund-col numeric">$1.5T</td>
+              <td class="fund-col numeric">21.9</td>
+              <td class="fund-col numeric">0.89</td>
+              <td class="fund-col numeric">1.24</td>
             </tr>
           
             <tr class="" data-search="mod modine manufacturing power, cooling & physical infrastructure">
@@ -1079,9 +1284,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">60.93</span>
+                  <span class="rsi-cell ">60.92</span>
                 
               </td>
+              <td class="fund-col numeric">$14.9B</td>
+              <td class="fund-col numeric">154.9</td>
+              <td class="fund-col numeric">1.12</td>
+              <td class="fund-col numeric">1.66</td>
             </tr>
           
             <tr class="" data-search="mrvl marvell custom silicon / asics">
@@ -1097,6 +1306,10 @@
                   <span class="rsi-cell ">62.34</span>
                 
               </td>
+              <td class="fund-col numeric">$150.9B</td>
+              <td class="fund-col numeric">56.4</td>
+              <td class="fund-col numeric">2.00</td>
+              <td class="fund-col numeric">2.25</td>
             </tr>
           
             <tr class="" data-search="msft microsoft hyperscalers / cloud platforms">
@@ -1112,6 +1325,10 @@
                   <span class="rsi-cell ">50.72</span>
                 
               </td>
+              <td class="fund-col numeric">$3.1T</td>
+              <td class="fund-col numeric">24.5</td>
+              <td class="fund-col numeric">1.29</td>
+              <td class="fund-col numeric">1.09</td>
             </tr>
           
             <tr class="" data-search="mtsi macom optical supporting components">
@@ -1127,6 +1344,10 @@
                   <span class="rsi-cell ">84.61</span>
                 
               </td>
+              <td class="fund-col numeric">$27.4B</td>
+              <td class="fund-col numeric">153.7</td>
+              <td class="fund-col numeric">2.05</td>
+              <td class="fund-col numeric">1.60</td>
             </tr>
           
             <tr class="" data-search="mu micron technology ai memory & storage">
@@ -1142,6 +1363,10 @@
                   <span class="rsi-cell ">83.71</span>
                 
               </td>
+              <td class="fund-col numeric">$899.4B</td>
+              <td class="fund-col numeric">37.6</td>
+              <td class="fund-col numeric">0.26</td>
+              <td class="fund-col numeric">1.92</td>
             </tr>
           
             <tr class="" data-search="nbis nebius group data center operators">
@@ -1157,6 +1382,10 @@
                   <span class="rsi-cell ">59.58</span>
                 
               </td>
+              <td class="fund-col numeric">$48.8B</td>
+              <td class="fund-col numeric">4809.0</td>
+              <td class="fund-col numeric">0.63</td>
+              <td class="fund-col numeric">1.24</td>
             </tr>
           
             <tr class="" data-search="ndaq nasdaq fintech — exchanges & financial data">
@@ -1169,9 +1398,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">46.97</span>
+                  <span class="rsi-cell ">46.96</span>
                 
               </td>
+              <td class="fund-col numeric">$49.9B</td>
+              <td class="fund-col numeric">26.6</td>
+              <td class="fund-col numeric">2.31</td>
+              <td class="fund-col numeric">0.99</td>
             </tr>
           
             <tr class="" data-search="net cloudflare tech saas — cybersecurity">
@@ -1187,6 +1420,10 @@
                   <span class="rsi-cell ">37.99</span>
                 
               </td>
+              <td class="fund-col numeric">$69.8B</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">2.38</td>
+              <td class="fund-col numeric">1.67</td>
             </tr>
           
             <tr class="" data-search="nok nokia / infinera ai networking & interconnect">
@@ -1202,6 +1439,10 @@
                   <span class="rsi-cell ">60.42</span>
                 
               </td>
+              <td class="fund-col numeric">$76.6B</td>
+              <td class="fund-col numeric">85.8</td>
+              <td class="fund-col numeric">1.21</td>
+              <td class="fund-col numeric">0.77</td>
             </tr>
           
             <tr class="" data-search="now servicenow tech saas — enterprise software">
@@ -1217,6 +1458,10 @@
                   <span class="rsi-cell ">48.20</span>
                 
               </td>
+              <td class="fund-col numeric">$94.5B</td>
+              <td class="fund-col numeric">54.5</td>
+              <td class="fund-col numeric">0.88</td>
+              <td class="fund-col numeric">0.82</td>
             </tr>
           
             <tr class="row-watch" data-search="nrg nrg energy ai energy">
@@ -1232,6 +1477,10 @@
                   <span class="rsi-cell watch">30.25</span>
                 
               </td>
+              <td class="fund-col numeric">$29.0B</td>
+              <td class="fund-col numeric">151.0</td>
+              <td class="fund-col numeric">1.23</td>
+              <td class="fund-col numeric">1.31</td>
             </tr>
           
             <tr class="" data-search="nvda nvidia ai compute / gpus / accelerators">
@@ -1247,6 +1496,10 @@
                   <span class="rsi-cell ">66.42</span>
                 
               </td>
+              <td class="fund-col numeric">$5.4T</td>
+              <td class="fund-col numeric">45.2</td>
+              <td class="fund-col numeric">0.68</td>
+              <td class="fund-col numeric">2.24</td>
             </tr>
           
             <tr class="" data-search="oklo oklo ai energy">
@@ -1262,6 +1515,10 @@
                   <span class="rsi-cell ">54.18</span>
                 
               </td>
+              <td class="fund-col numeric">$13.4B</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">1.18</td>
             </tr>
           
             <tr class="" data-search="optx syntec optics optical supporting components">
@@ -1274,9 +1531,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">40.26</span>
+                  <span class="rsi-cell ">40.27</span>
                 
               </td>
+              <td class="fund-col numeric">$328M</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">-0.92</td>
             </tr>
           
             <tr class="" data-search="orcl oracle hyperscalers / cloud platforms">
@@ -1289,9 +1550,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">71.40</span>
+                  <span class="rsi-cell ">71.41</span>
                 
               </td>
+              <td class="fund-col numeric">$553.6B</td>
+              <td class="fund-col numeric">34.6</td>
+              <td class="fund-col numeric">1.24</td>
+              <td class="fund-col numeric">1.54</td>
             </tr>
           
             <tr class="" data-search="panw palo alto networks tech saas — cybersecurity">
@@ -1304,9 +1569,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">79.09</span>
+                  <span class="rsi-cell ">79.08</span>
                 
               </td>
+              <td class="fund-col numeric">$171.5B</td>
+              <td class="fund-col numeric">116.8</td>
+              <td class="fund-col numeric">3.49</td>
+              <td class="fund-col numeric">0.77</td>
             </tr>
           
             <tr class="" data-search="pltr palantir tech saas — data & analytics">
@@ -1319,9 +1588,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">46.39</span>
+                  <span class="rsi-cell ">46.40</span>
                 
               </td>
+              <td class="fund-col numeric">$323.9B</td>
+              <td class="fund-col numeric">150.1</td>
+              <td class="fund-col numeric">2.05</td>
+              <td class="fund-col numeric">1.52</td>
             </tr>
           
             <tr class="" data-search="poet poet technologies optical devices">
@@ -1337,6 +1610,10 @@
                   <span class="rsi-cell ">63.28</span>
                 
               </td>
+              <td class="fund-col numeric">$2.1B</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">0.54</td>
             </tr>
           
             <tr class="row-watch" data-search="pypl paypal fintech — payment processors">
@@ -1349,9 +1626,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell watch">32.05</span>
+                  <span class="rsi-cell watch">32.06</span>
                 
               </td>
+              <td class="fund-col numeric">$40.1B</td>
+              <td class="fund-col numeric">8.5</td>
+              <td class="fund-col numeric">0.82</td>
+              <td class="fund-col numeric">1.40</td>
             </tr>
           
             <tr class="" data-search="schw charles schwab fintech — digital brokers & neobanks">
@@ -1367,6 +1648,10 @@
                   <span class="rsi-cell ">36.41</span>
                 
               </td>
+              <td class="fund-col numeric">$154.0B</td>
+              <td class="fund-col numeric">17.5</td>
+              <td class="fund-col numeric">1.13</td>
+              <td class="fund-col numeric">0.80</td>
             </tr>
           
             <tr class="" data-search="smci super micro computer ai servers & systems">
@@ -1379,9 +1664,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">73.23</span>
+                  <span class="rsi-cell ">73.24</span>
                 
               </td>
+              <td class="fund-col numeric">$21.2B</td>
+              <td class="fund-col numeric">18.6</td>
+              <td class="fund-col numeric">0.91</td>
+              <td class="fund-col numeric">1.68</td>
             </tr>
           
             <tr class="" data-search="snow snowflake tech saas — data & analytics">
@@ -1397,6 +1686,10 @@
                   <span class="rsi-cell ">59.49</span>
                 
               </td>
+              <td class="fund-col numeric">$52.7B</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">4.27</td>
+              <td class="fund-col numeric">1.08</td>
             </tr>
           
             <tr class="" data-search="snps synopsys ai eda & design tools">
@@ -1409,9 +1702,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">70.76</span>
+                  <span class="rsi-cell ">70.77</span>
                 
               </td>
+              <td class="fund-col numeric">$98.3B</td>
+              <td class="fund-col numeric">78.9</td>
+              <td class="fund-col numeric">3.41</td>
+              <td class="fund-col numeric">1.25</td>
             </tr>
           
             <tr class="" data-search="sofi sofi technologies fintech — digital brokers & neobanks">
@@ -1427,6 +1724,10 @@
                   <span class="rsi-cell ">36.72</span>
                 
               </td>
+              <td class="fund-col numeric">$20.6B</td>
+              <td class="fund-col numeric">35.6</td>
+              <td class="fund-col numeric">0.98</td>
+              <td class="fund-col numeric">2.13</td>
             </tr>
           
             <tr class="" data-search="stx seagate technology ai memory & storage">
@@ -1439,9 +1740,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">75.93</span>
+                  <span class="rsi-cell ">75.94</span>
                 
               </td>
+              <td class="fund-col numeric">$185.5B</td>
+              <td class="fund-col numeric">78.3</td>
+              <td class="fund-col numeric">0.54</td>
+              <td class="fund-col numeric">2.01</td>
             </tr>
           
             <tr class="" data-search="tsm tsmc chip foundry">
@@ -1454,9 +1759,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">60.87</span>
+                  <span class="rsi-cell ">60.86</span>
                 
               </td>
+              <td class="fund-col numeric">$2.1T</td>
+              <td class="fund-col numeric">34.7</td>
+              <td class="fund-col numeric">1.28</td>
+              <td class="fund-col numeric">1.26</td>
             </tr>
           
             <tr class="" data-search="veev veeva systems tech saas — vertical saas">
@@ -1469,9 +1778,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">50.41</span>
+                  <span class="rsi-cell ">50.40</span>
                 
               </td>
+              <td class="fund-col numeric">$26.4B</td>
+              <td class="fund-col numeric">29.7</td>
+              <td class="fund-col numeric">0.77</td>
+              <td class="fund-col numeric">0.92</td>
             </tr>
           
             <tr class="" data-search="viav viavi solutions optical supporting components">
@@ -1487,6 +1800,10 @@
                   <span class="rsi-cell ">55.56</span>
                 
               </td>
+              <td class="fund-col numeric">$12.7B</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">1.34</td>
+              <td class="fund-col numeric">1.23</td>
             </tr>
           
             <tr class="" data-search="vrt vertiv holdings power, cooling & physical infrastructure">
@@ -1499,9 +1816,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">58.59</span>
+                  <span class="rsi-cell ">58.60</span>
                 
               </td>
+              <td class="fund-col numeric">$141.2B</td>
+              <td class="fund-col numeric">92.4</td>
+              <td class="fund-col numeric">1.70</td>
+              <td class="fund-col numeric">2.10</td>
             </tr>
           
             <tr class="row-watch" data-search="vst vistra energy ai energy">
@@ -1517,6 +1838,10 @@
                   <span class="rsi-cell watch">33.59</span>
                 
               </td>
+              <td class="fund-col numeric">$50.3B</td>
+              <td class="fund-col numeric">24.9</td>
+              <td class="fund-col numeric">1.27</td>
+              <td class="fund-col numeric">1.45</td>
             </tr>
           
             <tr class="" data-search="wday workday tech saas — enterprise software">
@@ -1529,9 +1854,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">54.08</span>
+                  <span class="rsi-cell ">54.07</span>
                 
               </td>
+              <td class="fund-col numeric">$30.5B</td>
+              <td class="fund-col numeric">47.2</td>
+              <td class="fund-col numeric">0.49</td>
+              <td class="fund-col numeric">1.03</td>
             </tr>
           
             <tr class="" data-search="wdc western digital ai memory & storage">
@@ -1547,6 +1876,10 @@
                   <span class="rsi-cell ">69.10</span>
                 
               </td>
+              <td class="fund-col numeric">$177.4B</td>
+              <td class="fund-col numeric">30.8</td>
+              <td class="fund-col numeric">0.43</td>
+              <td class="fund-col numeric">2.16</td>
             </tr>
           
             <tr class="" data-search="xyz block fintech — payment processors">
@@ -1562,6 +1895,10 @@
                   <span class="rsi-cell ">64.40</span>
                 
               </td>
+              <td class="fund-col numeric">$43.8B</td>
+              <td class="fund-col numeric">57.5</td>
+              <td class="fund-col numeric">0.85</td>
+              <td class="fund-col numeric">2.57</td>
             </tr>
           
             <tr class="" data-search="zs zscaler tech saas — cybersecurity">
@@ -1574,9 +1911,13 @@
               </td>
               <td class="numeric">
                 
-                  <span class="rsi-cell ">68.16</span>
+                  <span class="rsi-cell ">68.17</span>
                 
               </td>
+              <td class="fund-col numeric">$24.0B</td>
+              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric">1.64</td>
+              <td class="fund-col numeric">0.96</td>
             </tr>
           
         </tbody>
@@ -1584,6 +1925,13 @@
       <div class="empty-search" id="scan-empty">No tickers match the filter.</div>
     </details>
     <script>
+      function toggleFundamentals(event, btn) {
+        event.preventDefault();
+        event.stopPropagation();
+        var table = btn.closest('details').querySelector('table');
+        var show = table.classList.toggle('show-fundamentals');
+        btn.textContent = show ? '− Fundamentals' : '+ Fundamentals';
+      }
       (function() {
         var input = document.getElementById('scan-search-input');
         var table = document.getElementById('scan-table');
@@ -1617,10 +1965,10 @@
 
   <footer class="page">
     <div>
-      Generated 2026-05-11T02:03:03 · Wilder RSI(14) on 4h closed bars · TradingView convention (9:30 / 13:30 ET)
+      Generated 2026-05-11T16:02:15+00:00 &middot; Wilder RSI(14) on 4h closed bars &middot; TradingView convention (9:30 / 13:30 ET)
     </div>
     <div>
-      Analysis model: <span class="mono">—</span> · Data: yfinance
+      Analysis model: <span class="mono">—</span> &middot; Data: yfinance
     </div>
   </footer>
 
