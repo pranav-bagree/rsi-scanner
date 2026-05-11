@@ -1,5 +1,5 @@
-version: 2026-05-10
-description: AI infrastructure universe — 48 tickers across 12 subcategories
+version: 2026-05-11
+description: AI infrastructure universe — 50 tickers across 12 subcategories
 
 sectors:
   AI Compute / GPUs / Accelerators:
@@ -52,6 +52,8 @@ sectors:
     - { ticker: DLR,  name: Digital Realty,               note: "Hyperscale data center REIT; long-term capacity leases" }
     - { ticker: NBIS, name: Nebius Group,                 note: "GPU-native cloud operator; spun out of Yandex" }
     - { ticker: CRWV, name: CoreWeave,                    note: "Pure-play GPU cloud; NVDA-backed; vs AWS/Azure on AI workloads" }
+    - { ticker: APLD, name: Applied Digital,              note: "Pure-play AI/HPC data center hosting; pivoted from crypto mining" }
+    - { ticker: GLXY, name: Galaxy Digital,               note: "Hybrid: digital-asset financial services + AI/HPC data centers (Helios site, CoreWeave anchor)" }
 
   AI Energy:
     - { ticker: CEG,  name: Constellation Energy,         note: "Nuclear power; AWS deal at Three Mile Island" }
