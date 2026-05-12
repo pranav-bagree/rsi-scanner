@@ -16,11 +16,15 @@ on:
       - '.gitignore'
       - 'output/**'
   schedule:
-    # Hourly during US trading hours, weekdays. Cron is UTC; one entry covers
-    # both EDT and EST since 14:05–21:05 UTC spans 10:05–17:05 EDT and
-    # 09:05–16:05 EST — both fully bracket the 09:30–16:00 ET market session
-    # plus a buffer past the 13:30 ET / 16:00 ET 4h bar closes.
-    - cron: '5 14-21 * * 1-5'
+    # Twice per hour during US trading hours, weekdays. GitHub Actions
+    # scheduled workflows are best-effort and get deprioritized at common
+    # minute offsets (:00, :05, :15, :30). We fire at :13 and :43 (uncommon
+    # offsets) for better reliability, and run twice an hour so a single
+    # missed/delayed fire still leaves the dashboard < 30 min stale.
+    # Hour window 13–22 UTC covers 09:13–17:43 ET in EDT and 08:13–16:43 ET
+    # in EST — fully bracketing the 09:30–16:00 ET market session in either
+    # season, plus the 13:30 ET and 16:00 ET 4h bar closes.
+    - cron: '13,43 13-22 * * 1-5'
   workflow_dispatch: {}
 
 permissions:
