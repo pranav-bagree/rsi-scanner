@@ -17,3 +17,4 @@ output/
 
 # One-off test artifacts (kept locally, not part of the pipeline)
 NET_4h_rsi.png
+.claude/worktrees/
