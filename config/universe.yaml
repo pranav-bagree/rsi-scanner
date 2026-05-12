@@ -1,5 +1,5 @@
 version: 2026-05-11
-description: Multi-theme universe — 79 tickers across 22 subcategories (AI infrastructure + Fintech + Tech SaaS; alphabetical within subcategory)
+description: Multi-theme universe — 80 tickers across 23 subcategories (AI infrastructure + Fintech + Tech SaaS + Consumer Internet; alphabetical within subcategory)
 
 sectors:
   AI Compute / GPUs / Accelerators:
@@ -124,3 +124,6 @@ sectors:
 
   Tech SaaS — Productivity:
     - { ticker: HUBS, name: HubSpot,                      note: "Marketing + sales + service SaaS for SMB / mid-market" }
+
+  Consumer Internet — Streaming:
+    - { ticker: NFLX, name: Netflix,                      note: "Global streaming subscription leader; ads tier + password-sharing crackdown driving growth" }
