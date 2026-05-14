@@ -265,6 +265,19 @@
     text-transform: uppercase; letter-spacing: 0.05em; font-size: 11px;
     background: var(--bg-card-soft);
   }
+  details.full-scan th.sortable {
+    cursor: pointer; user-select: none;
+    transition: color 0.12s, background 0.12s;
+  }
+  details.full-scan th.sortable:hover { color: var(--text); background: var(--bg-card); }
+  details.full-scan th .sort-arrow {
+    display: inline-block; margin-left: 4px; font-size: 10px;
+    color: var(--text-dim); transition: color 0.12s;
+    font-variant-numeric: tabular-nums;
+  }
+  details.full-scan th.sort-asc .sort-arrow,
+  details.full-scan th.sort-desc .sort-arrow { color: var(--accent); }
+  details.full-scan th.sort-asc, details.full-scan th.sort-desc { color: var(--text); }
   details.full-scan td.numeric { text-align: right; font-variant-numeric: tabular-nums; }
   details.full-scan th.numeric { text-align: right; }
   details.full-scan td.ticker { font-weight: 600; }
@@ -340,17 +353,17 @@
       <div class="label">Oversold (RSI &lt; {{ oversold_threshold }})</div>
       <div class="value">{{ hits|length }}</div>
     </div>
-    <div class="stat {% if watch|length %}buy-light{% endif %}">
-      <div class="label">Watch ({{ oversold_threshold }} – {{ watch_threshold }})</div>
-      <div class="value">{{ watch|length }}</div>
-    </div>
     <div class="stat {% if overbought_hits|length %}sell{% endif %}">
       <div class="label">Overbought (RSI &gt; {{ overbought_threshold }})</div>
       <div class="value">{{ overbought_hits|length }}</div>
     </div>
-    <div class="stat {% if overbought_watch|length %}sell-light{% endif %}">
-      <div class="label">Watch ({{ approaching_overbought_threshold }} – {{ overbought_threshold }})</div>
-      <div class="value">{{ overbought_watch|length }}</div>
+    <div class="stat">
+      <div class="label">Universe</div>
+      <div class="value">{{ universe_size }}</div>
+    </div>
+    <div class="stat">
+      <div class="label">Median RSI</div>
+      <div class="value">{{ "%.1f"|format(median_rsi) if median_rsi is not none else "—" }}</div>
     </div>
   </div>
 
@@ -520,16 +533,16 @@
       <table id="scan-table">
         <thead>
           <tr>
-            <th>Ticker</th>
-            <th>Company</th>
-            <th>Sector</th>
-            <th class="numeric">Price</th>
-            <th class="numeric">Bar change</th>
-            <th class="numeric" title="14-period Wilder RSI on 4h bars — uses the in-progress bar when one is open">RSI(14)</th>
-            <th class="fund-col numeric">Mkt Cap</th>
-            <th class="fund-col numeric">P/E</th>
-            <th class="fund-col numeric">PEG</th>
-            <th class="fund-col numeric">Beta</th>
+            <th class="sortable" data-sort-kind="text" data-col-idx="0">Ticker<span class="sort-arrow">↕</span></th>
+            <th class="sortable" data-sort-kind="text" data-col-idx="1">Company<span class="sort-arrow">↕</span></th>
+            <th class="sortable" data-sort-kind="text" data-col-idx="2">Sector<span class="sort-arrow">↕</span></th>
+            <th class="numeric sortable" data-sort-kind="numeric" data-col-idx="3">Price<span class="sort-arrow">↕</span></th>
+            <th class="numeric sortable" data-sort-kind="numeric" data-col-idx="4">Bar change<span class="sort-arrow">↕</span></th>
+            <th class="numeric sortable" data-sort-kind="numeric" data-col-idx="5" title="14-period Wilder RSI on 4h bars — uses the in-progress bar when one is open">RSI(14)<span class="sort-arrow">↕</span></th>
+            <th class="fund-col numeric sortable" data-sort-kind="numeric" data-col-idx="6">Mkt Cap<span class="sort-arrow">↕</span></th>
+            <th class="fund-col numeric sortable" data-sort-kind="numeric" data-col-idx="7">P/E<span class="sort-arrow">↕</span></th>
+            <th class="fund-col numeric sortable" data-sort-kind="numeric" data-col-idx="8">PEG<span class="sort-arrow">↕</span></th>
+            <th class="fund-col numeric sortable" data-sort-kind="numeric" data-col-idx="9">Beta<span class="sort-arrow">↕</span></th>
           </tr>
         </thead>
         <tbody>
@@ -538,19 +551,19 @@
               <td class="ticker">{{ r.ticker }}</td>
               <td>{{ r.company }}</td>
               <td class="sector">{{ r.sector }}</td>
-              <td class="numeric">{% if r.price is not none %}${{ "%.2f"|format(r.price) }}{% else %}—{% endif %}</td>
-              <td class="numeric {% if r.bar_change_pct is not none and r.bar_change_pct >= 0 %}change-pos{% elif r.bar_change_pct is not none %}change-neg{% endif %}">
+              <td class="numeric" data-sort="{{ r.price if r.price is not none else '' }}">{% if r.price is not none %}${{ "%.2f"|format(r.price) }}{% else %}—{% endif %}</td>
+              <td class="numeric {% if r.bar_change_pct is not none and r.bar_change_pct >= 0 %}change-pos{% elif r.bar_change_pct is not none %}change-neg{% endif %}" data-sort="{{ r.bar_change_pct if r.bar_change_pct is not none else '' }}">
                 {% if r.bar_change_pct is not none %}{{ "%+.2f"|format(r.bar_change_pct) }}%{% else %}—{% endif %}
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="{{ r.rsi if r.rsi is not none else '' }}">
                 {% if r.rsi is not none %}
                   <span class="rsi-cell {% if r.status == 'oversold' %}oversold{% elif r.status == 'watch' %}watch{% elif r.status == 'overbought' %}overbought{% elif r.status == 'watch_overbought' %}watch-overbought{% endif %}">{{ "%.2f"|format(r.rsi) }}</span>
                 {% else %}—{% endif %}
               </td>
-              <td class="fund-col numeric">{{ r.market_cap | fmt_market_cap }}</td>
-              <td class="fund-col numeric">{% if r.pe is not none %}{{ "%.1f"|format(r.pe) }}{% else %}—{% endif %}</td>
-              <td class="fund-col numeric">{% if r.peg is not none %}{{ "%.2f"|format(r.peg) }}{% else %}—{% endif %}</td>
-              <td class="fund-col numeric">{% if r.beta is not none %}{{ "%.2f"|format(r.beta) }}{% else %}—{% endif %}</td>
+              <td class="fund-col numeric" data-sort="{{ r.market_cap if r.market_cap is not none else '' }}">{{ r.market_cap | fmt_market_cap }}</td>
+              <td class="fund-col numeric" data-sort="{{ r.pe if r.pe is not none else '' }}">{% if r.pe is not none %}{{ "%.1f"|format(r.pe) }}{% else %}—{% endif %}</td>
+              <td class="fund-col numeric" data-sort="{{ r.peg if r.peg is not none else '' }}">{% if r.peg is not none %}{{ "%.2f"|format(r.peg) }}{% else %}—{% endif %}</td>
+              <td class="fund-col numeric" data-sort="{{ r.beta if r.beta is not none else '' }}">{% if r.beta is not none %}{{ "%.2f"|format(r.beta) }}{% else %}—{% endif %}</td>
             </tr>
           {% endfor %}
         </tbody>
@@ -591,6 +604,64 @@
             table.style.borderBottomLeftRadius = '';
             table.style.borderBottomRightRadius = '';
           }
+        });
+
+        // Column sorting
+        var ARROW_UNSORTED = '↕', ARROW_ASC = '▲', ARROW_DESC = '▼';
+        var sortState = { col: null, dir: null };
+        var headers = table.querySelectorAll('thead th.sortable');
+        var tbody = table.querySelector('tbody');
+
+        function applySort() {
+          var rs = Array.from(tbody.querySelectorAll('tr'));
+          if (sortState.col === null) return;
+          var idx = sortState.col.idx;
+          var kind = sortState.col.kind;
+          var dir = sortState.dir;
+          rs.sort(function(a, b) {
+            var ca = a.cells[idx], cb = b.cells[idx];
+            if (kind === 'numeric') {
+              var ra = ca.getAttribute('data-sort');
+              var rb = cb.getAttribute('data-sort');
+              var va = (ra === null || ra === '') ? NaN : parseFloat(ra);
+              var vb = (rb === null || rb === '') ? NaN : parseFloat(rb);
+              var aNaN = isNaN(va), bNaN = isNaN(vb);
+              // Always push missing values to the bottom regardless of direction
+              if (aNaN && bNaN) return 0;
+              if (aNaN) return 1;
+              if (bNaN) return -1;
+              return dir === 'asc' ? va - vb : vb - va;
+            } else {
+              var sa = ca.textContent.trim().toLowerCase();
+              var sb = cb.textContent.trim().toLowerCase();
+              if (sa === sb) return 0;
+              return dir === 'asc' ? (sa < sb ? -1 : 1) : (sa > sb ? -1 : 1);
+            }
+          });
+          rs.forEach(function(r) { tbody.appendChild(r); });
+        }
+
+        headers.forEach(function(th) {
+          th.addEventListener('click', function() {
+            var idx = parseInt(th.getAttribute('data-col-idx'), 10);
+            var kind = th.getAttribute('data-sort-kind');
+            if (sortState.col && sortState.col.idx === idx) {
+              sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+              sortState.col = { idx: idx, kind: kind, th: th };
+              // Sensible default: numeric desc (largest first), text asc (A→Z)
+              sortState.dir = kind === 'numeric' ? 'desc' : 'asc';
+            }
+            headers.forEach(function(h) {
+              h.classList.remove('sort-asc', 'sort-desc');
+              var arr = h.querySelector('.sort-arrow');
+              if (arr) arr.textContent = ARROW_UNSORTED;
+            });
+            th.classList.add(sortState.dir === 'asc' ? 'sort-asc' : 'sort-desc');
+            var arrow = th.querySelector('.sort-arrow');
+            if (arrow) arrow.textContent = sortState.dir === 'asc' ? ARROW_ASC : ARROW_DESC;
+            applySort();
+          });
         });
       })();
     </script>
