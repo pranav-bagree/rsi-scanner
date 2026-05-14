@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI Infra — 4h RSI Scanner — 2026-05-14 13:24 PT</title>
+<title>AI Infra — 4h RSI Scanner — 2026-05-14 14:19 PT</title>
 <style>
   :root {
     --bg: #0a0e1a;
@@ -61,7 +61,7 @@
 
   .summary {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
-    margin: 28px 0 36px;
+    margin: 28px 0 24px;
   }
   .summary .stat {
     background: var(--bg-card); border: 1px solid var(--border);
@@ -73,11 +73,21 @@
   }
   .summary .stat .value { font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
   .summary .stat.buy .value { color: var(--buy); }
-  .summary .stat.buy-light .value { color: var(--buy-light); }
   .summary .stat.sell .value { color: var(--sell); }
-  .summary .stat.sell-light .value { color: var(--sell-light); }
 
-  section { margin-top: 40px; }
+  /* Tip banner about local Claude analysis commands */
+  .tip-banner {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px; padding: 12px 16px; margin-bottom: 28px;
+    color: var(--text-muted); font-size: 13px;
+  }
+  .tip-banner code {
+    background: var(--bg-card-soft); padding: 1px 6px; border-radius: 4px;
+    color: var(--text);
+  }
+
+  section { margin-top: 36px; }
   section h2 {
     font-size: 18px; font-weight: 600; letter-spacing: -0.01em;
     margin: 0 0 16px; display: flex; align-items: center; gap: 10px;
@@ -91,69 +101,43 @@
   section h2 .count.sell { background: var(--sell-soft); color: var(--sell); }
   section h2 .count.sell-light { background: var(--sell-light-soft); color: var(--sell-light); }
 
-  /* Hit card (oversold, with full analysis) */
-  .hit {
+  /* Side-by-side layout for the signal + approaching rows */
+  .side-by-side {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  .side-by-side .col h2 { margin-top: 0; }
+  @media (max-width: 880px) {
+    .side-by-side { grid-template-columns: 1fr; }
+  }
+
+  /* Unified compact signal card (used for both oversold and overbought) */
+  .signal-grid { display: grid; gap: 10px; }
+  .signal-card {
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 28px; margin-bottom: 20px;
-    border-left: 3px solid var(--buy);
+    border-radius: 10px; padding: 14px 16px;
+    display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center;
   }
-  .hit > .header {
-    display: flex; align-items: baseline; justify-content: space-between;
-    gap: 24px; flex-wrap: wrap; margin-bottom: 18px;
-  }
-  .hit .title { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
-  .hit .ticker { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
-  .hit .company { color: var(--text-muted); font-size: 15px; }
-  .hit .sector-tag {
-    font-size: 11px; padding: 3px 10px; border-radius: 999px;
+  .signal-card.oversold { border-left: 3px solid var(--buy); }
+  .signal-card.overbought { border-left: 3px solid var(--sell); }
+  .signal-card .lhs .ticker { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
+  .signal-card .lhs .company { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .signal-card .lhs .sector-tag {
+    display: inline-block; font-size: 10.5px; padding: 2px 8px; border-radius: 999px;
     background: var(--bg-card-soft); color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 0.04em;
+    text-transform: uppercase; letter-spacing: 0.04em; margin-top: 6px;
   }
-  .hit .key-stats { display: flex; gap: 24px; flex-wrap: wrap; }
-  .hit .key-stats .ks { text-align: right; }
-  .hit .key-stats .ks .label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
-  .hit .key-stats .ks .value { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
-  .hit .key-stats .ks .value.rsi-oversold { color: var(--buy); }
-  .hit .key-stats .ks .value.move-neg { color: var(--sell); }
-  .hit .key-stats .ks .sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .signal-card .rhs { text-align: right; }
+  .signal-card .rsi-val { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .signal-card.oversold .rsi-val { color: var(--buy); }
+  .signal-card.overbought .rsi-val { color: var(--sell); }
+  .signal-card .rsi-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; letter-spacing: 0.04em; text-transform: uppercase; }
 
-  .hit .analysis-section {
-    margin-top: 20px; padding-top: 20px;
-    border-top: 1px solid var(--border);
-  }
-  .hit .analysis-section h3 {
-    font-size: 13px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.08em; color: var(--text-muted); margin: 0 0 14px;
-  }
-  .hit .analysis-section .body {
-    font-size: 14.5px; line-height: 1.65;
-  }
-  .hit .analysis-section .body p { margin: 0 0 12px; }
-  .hit .analysis-section .body p:last-child { margin-bottom: 0; }
-  .hit .analysis-section .body h2 {
-    font-size: 14px; font-weight: 600; margin: 18px 0 8px;
-    color: var(--text); text-transform: none; letter-spacing: 0;
-  }
-  .hit .analysis-section .body h2:first-child { margin-top: 0; }
-  .hit .analysis-section .body ul { margin: 8px 0 12px; padding-left: 20px; }
-  .hit .analysis-section .body li { margin-bottom: 4px; }
-  .hit .analysis-section .body code { background: var(--bg-card-soft); padding: 1px 6px; border-radius: 4px; }
-
-  .citations {
-    margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border);
-    font-size: 12px; color: var(--text-muted);
-  }
-  .citations strong { color: var(--text-muted); font-weight: 500; }
-  .citations a { display: inline-block; margin-right: 14px; }
-
-  .analysis-skipped {
-    font-style: italic; color: var(--text-muted); font-size: 13px;
-  }
-
-  /* Watchlist (approaching oversold / approaching overbought) */
+  /* Approaching cards (watch list) */
   .watch-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 10px;
+    display: grid; grid-template-columns: 1fr; gap: 10px;
   }
   .watch-card {
     background: var(--bg-card); border: 1px solid var(--border);
@@ -168,44 +152,11 @@
   .watch-card .rsi-val { font-size: 18px; font-weight: 600; }
   .watch-card.approaching-oversold .rsi-val { color: var(--buy-light); }
   .watch-card.approaching-overbought .rsi-val { color: var(--sell-light); }
-  .watch-card .price { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
 
-  /* Compact overbought signal card (no analysis) */
-  .ob-grid {
-    display: grid; grid-template-columns: 1fr; gap: 10px;
-  }
-  .ob-card {
+  .empty-state-compact {
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 10px; padding: 14px 16px;
-    border-left: 3px solid var(--sell);
-    display: grid; grid-template-columns: 1fr auto; gap: 16px;
-    align-items: center;
-  }
-  .ob-card .lhs .ticker { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
-  .ob-card .lhs .company { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-  .ob-card .lhs .sector-tag {
-    display: inline-block;
-    font-size: 10.5px; padding: 2px 8px; border-radius: 999px;
-    background: var(--bg-card-soft); color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 0.04em;
-    margin-top: 6px;
-  }
-  .ob-card .rhs { text-align: right; }
-  .ob-card .rsi-val { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; color: var(--sell); }
-  .ob-card .price { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
-  .ob-card .sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-  .ob-card .sub.move-pos { color: var(--buy); }
-
-  /* Side-by-side layout for the overbought + approaching-overbought pair */
-  .side-by-side {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    align-items: start;
-  }
-  .side-by-side .col h2 { margin-top: 0; }
-  @media (max-width: 880px) {
-    .side-by-side { grid-template-columns: 1fr; }
+    border-radius: 10px; padding: 18px; text-align: center;
+    color: var(--text-muted); font-size: 13px;
   }
 
   /* Full scan table */
@@ -310,19 +261,6 @@
   }
   .toggle-fund-btn:hover { color: var(--text); border-color: var(--accent); }
 
-  .empty-state {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 36px; text-align: center;
-    color: var(--text-muted);
-  }
-  .empty-state .emoji-free-mark { font-size: 28px; font-weight: 600; color: var(--buy); margin-bottom: 6px; letter-spacing: -0.01em; }
-
-  .empty-state-compact {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 10px; padding: 18px; text-align: center;
-    color: var(--text-muted); font-size: 13px;
-  }
-
   footer.page {
     margin-top: 64px; padding-top: 24px;
     border-top: 1px solid var(--border);
@@ -338,7 +276,7 @@
     <div>
       <h1>AI Infra — 4h RSI Scanner</h1>
       <div class="meta">
-        Scan run <span class="mono">2026-05-14 13:24 PT</span> ·
+        Scan run <span class="mono">2026-05-14 14:19 PT</span> ·
         <span class="mono">80</span> tickers ·
         last closed 4h bar: <span class="mono">2026-05-14 10:30 PT</span>
         
@@ -365,103 +303,26 @@
     </div>
   </div>
 
-  
-    <section>
-      <h2>Oversold signals <span class="count">0</span></h2>
-      <div class="empty-state">
-        <div class="emoji-free-mark">No hits</div>
-        <div>None of the 80 tracked tickers closed below RSI 25 on the latest 4h bar.</div>
-      </div>
-    </section>
-  
-
-  
-    <section>
-      <h2>Approaching oversold <span class="count buy-light">7</span></h2>
-      <div class="watch-grid">
-        
-          <div class="watch-card approaching-oversold">
-            <div class="lhs">
-              <div class="ticker">CEG</div>
-              <div class="company">Constellation Energy</div>
-            </div>
-            <div class="rhs">
-              <div class="rsi-val">31.0</div>
-              <div class="price">$275.24</div>
-            </div>
-          </div>
-        
-          <div class="watch-card approaching-oversold">
-            <div class="lhs">
-              <div class="ticker">FIS</div>
-              <div class="company">Fidelity National IS</div>
-            </div>
-            <div class="rhs">
-              <div class="rsi-val">32.8</div>
-              <div class="price">$41.81</div>
-            </div>
-          </div>
-        
-          <div class="watch-card approaching-oversold">
-            <div class="lhs">
-              <div class="ticker">VST</div>
-              <div class="company">Vistra Energy</div>
-            </div>
-            <div class="rhs">
-              <div class="rsi-val">33.1</div>
-              <div class="price">$141.89</div>
-            </div>
-          </div>
-        
-          <div class="watch-card approaching-oversold">
-            <div class="lhs">
-              <div class="ticker">HUBS</div>
-              <div class="company">HubSpot</div>
-            </div>
-            <div class="rhs">
-              <div class="rsi-val">33.3</div>
-              <div class="price">$183.46</div>
-            </div>
-          </div>
-        
-          <div class="watch-card approaching-oversold">
-            <div class="lhs">
-              <div class="ticker">FISV</div>
-              <div class="company">Fiserv</div>
-            </div>
-            <div class="rhs">
-              <div class="rsi-val">33.3</div>
-              <div class="price">$53.48</div>
-            </div>
-          </div>
-        
-          <div class="watch-card approaching-oversold">
-            <div class="lhs">
-              <div class="ticker">NRG</div>
-              <div class="company">NRG Energy</div>
-            </div>
-            <div class="rhs">
-              <div class="rsi-val">33.7</div>
-              <div class="price">$134.68</div>
-            </div>
-          </div>
-        
-          <div class="watch-card approaching-oversold">
-            <div class="lhs">
-              <div class="ticker">PYPL</div>
-              <div class="company">PayPal</div>
-            </div>
-            <div class="rhs">
-              <div class="rsi-val">33.7</div>
-              <div class="price">$45.05</div>
-            </div>
-          </div>
-        
-      </div>
-    </section>
-  
+  <div class="tip-banner">
+    For a deeper take on any ticker, open this repo in Claude Code and run
+    <code>/analyze-stock TICKER</code> (fundamental deep-dive) or
+    <code>/why-fell TICKER</code> (recent drawdown explanation).
+  </div>
 
   <section class="side-by-side">
+    <div class="col">
+      <h2>Oversold signals
+        
+          <span class="count">0</span>
+        
+      </h2>
+      
+        <div class="empty-state-compact">
+          No tickers below RSI 25 on the latest 4h bar.
+        </div>
+      
+    </div>
+
     <div class="col">
       <h2>Overbought signals
         
@@ -469,9 +330,9 @@
         
       </h2>
       
-        <div class="ob-grid">
+        <div class="signal-grid">
           
-            <div class="ob-card">
+            <div class="signal-card overbought">
               <div class="lhs">
                 <div class="ticker">CSCO</div>
                 <div class="company">Cisco</div>
@@ -479,12 +340,11 @@
               </div>
               <div class="rhs">
                 <div class="rsi-val">90.72</div>
-                <div class="price">$115.54</div>
-                <div class="sub move-pos">+16.9% / 5 bar</div>
+                <div class="rsi-sub">RSI(14)</div>
               </div>
             </div>
           
-            <div class="ob-card">
+            <div class="signal-card overbought">
               <div class="lhs">
                 <div class="ticker">PANW</div>
                 <div class="company">Palo Alto Networks</div>
@@ -492,12 +352,11 @@
               </div>
               <div class="rhs">
                 <div class="rsi-val">89.80</div>
-                <div class="price">$238.25</div>
-                <div class="sub move-pos">+10.9% / 5 bar</div>
+                <div class="rsi-sub">RSI(14)</div>
               </div>
             </div>
           
-            <div class="ob-card">
+            <div class="signal-card overbought">
               <div class="lhs">
                 <div class="ticker">FTNT</div>
                 <div class="company">Fortinet</div>
@@ -505,12 +364,11 @@
               </div>
               <div class="rhs">
                 <div class="rsi-val">88.31</div>
-                <div class="price">$121.88</div>
-                <div class="sub move-pos">+6.5% / 5 bar</div>
+                <div class="rsi-sub">RSI(14)</div>
               </div>
             </div>
           
-            <div class="ob-card">
+            <div class="signal-card overbought">
               <div class="lhs">
                 <div class="ticker">CRWD</div>
                 <div class="company">CrowdStrike</div>
@@ -518,12 +376,11 @@
               </div>
               <div class="rhs">
                 <div class="rsi-val">87.14</div>
-                <div class="price">$579.79</div>
-                <div class="sub move-pos">+5.9% / 5 bar</div>
+                <div class="rsi-sub">RSI(14)</div>
               </div>
             </div>
           
-            <div class="ob-card">
+            <div class="signal-card overbought">
               <div class="lhs">
                 <div class="ticker">POET</div>
                 <div class="company">POET Technologies</div>
@@ -531,12 +388,11 @@
               </div>
               <div class="rhs">
                 <div class="rsi-val">85.93</div>
-                <div class="price">$20.57</div>
-                <div class="sub move-pos">+50.0% / 5 bar</div>
+                <div class="rsi-sub">RSI(14)</div>
               </div>
             </div>
           
-            <div class="ob-card">
+            <div class="signal-card overbought">
               <div class="lhs">
                 <div class="ticker">DDOG</div>
                 <div class="company">Datadog</div>
@@ -544,12 +400,11 @@
               </div>
               <div class="rhs">
                 <div class="rsi-val">80.89</div>
-                <div class="price">$202.79</div>
-                <div class="sub move-pos">+2.7% / 5 bar</div>
+                <div class="rsi-sub">RSI(14)</div>
               </div>
             </div>
           
-            <div class="ob-card">
+            <div class="signal-card overbought">
               <div class="lhs">
                 <div class="ticker">NVDA</div>
                 <div class="company">Nvidia</div>
@@ -557,12 +412,11 @@
               </div>
               <div class="rhs">
                 <div class="rsi-val">77.42</div>
-                <div class="price">$235.74</div>
-                <div class="sub move-pos">+8.3% / 5 bar</div>
+                <div class="rsi-sub">RSI(14)</div>
               </div>
             </div>
           
-            <div class="ob-card">
+            <div class="signal-card overbought">
               <div class="lhs">
                 <div class="ticker">HPE</div>
                 <div class="company">Hewlett Packard Enterprise</div>
@@ -570,12 +424,11 @@
               </div>
               <div class="rhs">
                 <div class="rsi-val">76.58</div>
-                <div class="price">$34.12</div>
-                <div class="sub move-pos">+14.2% / 5 bar</div>
+                <div class="rsi-sub">RSI(14)</div>
               </div>
             </div>
           
-            <div class="ob-card">
+            <div class="signal-card overbought">
               <div class="lhs">
                 <div class="ticker">MTSI</div>
                 <div class="company">MACOM</div>
@@ -583,8 +436,92 @@
               </div>
               <div class="rhs">
                 <div class="rsi-val">75.21</div>
-                <div class="price">$383.64</div>
-                <div class="sub move-pos">+10.3% / 5 bar</div>
+                <div class="rsi-sub">RSI(14)</div>
+              </div>
+            </div>
+          
+        </div>
+      
+    </div>
+  </section>
+
+  <section class="side-by-side">
+    <div class="col">
+      <h2>Approaching oversold
+        
+          <span class="count buy-light">7</span>
+        
+      </h2>
+      
+        <div class="watch-grid">
+          
+            <div class="watch-card approaching-oversold">
+              <div class="lhs">
+                <div class="ticker">CEG</div>
+                <div class="company">Constellation Energy</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">31.0</div>
+              </div>
+            </div>
+          
+            <div class="watch-card approaching-oversold">
+              <div class="lhs">
+                <div class="ticker">FIS</div>
+                <div class="company">Fidelity National IS</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">32.8</div>
+              </div>
+            </div>
+          
+            <div class="watch-card approaching-oversold">
+              <div class="lhs">
+                <div class="ticker">VST</div>
+                <div class="company">Vistra Energy</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">33.1</div>
+              </div>
+            </div>
+          
+            <div class="watch-card approaching-oversold">
+              <div class="lhs">
+                <div class="ticker">HUBS</div>
+                <div class="company">HubSpot</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">33.3</div>
+              </div>
+            </div>
+          
+            <div class="watch-card approaching-oversold">
+              <div class="lhs">
+                <div class="ticker">FISV</div>
+                <div class="company">Fiserv</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">33.3</div>
+              </div>
+            </div>
+          
+            <div class="watch-card approaching-oversold">
+              <div class="lhs">
+                <div class="ticker">NRG</div>
+                <div class="company">NRG Energy</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">33.7</div>
+              </div>
+            </div>
+          
+            <div class="watch-card approaching-oversold">
+              <div class="lhs">
+                <div class="ticker">PYPL</div>
+                <div class="company">PayPal</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">33.7</div>
               </div>
             </div>
           
@@ -608,7 +545,6 @@
               </div>
               <div class="rhs">
                 <div class="rsi-val">72.3</div>
-                <div class="price">$155.67</div>
               </div>
             </div>
           
@@ -1979,13 +1915,13 @@
               <td class="ticker">STX</td>
               <td>Seagate Technology</td>
               <td class="sector">AI Memory & Storage</td>
-              <td class="numeric" data-sort="804.9500122070312">$804.95</td>
-              <td class="numeric change-pos" data-sort="0.17796602959755325">
-                +0.18%
+              <td class="numeric" data-sort="798.97998046875">$798.98</td>
+              <td class="numeric change-neg" data-sort="-0.5650187863581203">
+                -0.57%
               </td>
-              <td class="numeric" data-sort="65.16729146829996">
+              <td class="numeric" data-sort="63.631363060307145">
                 
-                  <span class="rsi-cell ">65.17</span>
+                  <span class="rsi-cell ">63.63</span>
                 
               </td>
               <td class="fund-col numeric" data-sort="180450525184">$180.5B</td>
@@ -2225,7 +2161,7 @@
               var va = (ra === null || ra === '') ? NaN : parseFloat(ra);
               var vb = (rb === null || rb === '') ? NaN : parseFloat(rb);
               var aNaN = isNaN(va), bNaN = isNaN(vb);
-              // Always push missing values to the bottom regardless of direction
+              // Missing values always sink to the bottom regardless of direction
               if (aNaN && bNaN) return 0;
               if (aNaN) return 1;
               if (bNaN) return -1;
@@ -2248,7 +2184,6 @@
               sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
             } else {
               sortState.col = { idx: idx, kind: kind, th: th };
-              // Sensible default: numeric desc (largest first), text asc (A→Z)
               sortState.dir = kind === 'numeric' ? 'desc' : 'asc';
             }
             headers.forEach(function(h) {
@@ -2268,7 +2203,7 @@
 
   <footer class="page">
     <div>
-      Generated 2026-05-14T20:24:31+00:00 &middot; Wilder RSI(14) on 4h closed bars &middot; TradingView convention (9:30 / 13:30 ET)
+      Generated 2026-05-14T21:19:15+00:00 &middot; Wilder RSI(14) on 4h closed bars &middot; TradingView convention (9:30 / 13:30 ET)
     </div>
     <div>
       Analysis model: <span class="mono">—</span> &middot; Data: yfinance
