@@ -56,8 +56,10 @@ def build_scan_rows(
     *,
     oversold: float,
     watch: float,
-) -> tuple[list[dict], list[dict], list[dict]]:
-    """Returns (all_rows, hits, watch_list).
+    overbought: float,
+    approaching_overbought: float,
+) -> tuple[list[dict], list[dict], list[dict], list[dict], list[dict]]:
+    """Returns (all_rows, oversold_hits, watch_oversold, overbought_hits, watch_overbought).
 
     `price_data` is a dict {ticker -> {"closed": df_with_rsi, "live": df_with_rsi}}.
     'closed' has the in-progress bar dropped (signal source). 'live' includes the
@@ -110,7 +112,16 @@ def build_scan_rows(
 
         # Bar change: current live price vs the previous closed bar's close.
         change = ((price - prev["Close"]) / prev["Close"] * 100) if prev is not None else None
-        status = "oversold" if rsi < oversold else "watch" if rsi < watch else "ok"
+        if rsi < oversold:
+            status = "oversold"
+        elif rsi < watch:
+            status = "watch"
+        elif rsi >= overbought:
+            status = "overbought"
+        elif rsi >= approaching_overbought:
+            status = "watch_overbought"
+        else:
+            status = "ok"
 
         all_rows.append(
             {
@@ -132,10 +143,14 @@ def build_scan_rows(
     # Hits and watch list are sorted by RSI ascending so the most-oversold sits first
     # in those panels.
     all_rows.sort(key=lambda r: r["ticker"])
-    by_rsi = sorted(all_rows, key=lambda r: (r["rsi"] if r["rsi"] is not None else 200))
-    hits = [r for r in by_rsi if r["status"] == "oversold"]
-    watch_list = [r for r in by_rsi if r["status"] == "watch"]
-    return all_rows, hits, watch_list
+    by_rsi_asc = sorted(all_rows, key=lambda r: (r["rsi"] if r["rsi"] is not None else 200))
+    # For overbought lists we want the most-overbought (highest RSI) first.
+    by_rsi_desc = sorted(all_rows, key=lambda r: (r["rsi"] if r["rsi"] is not None else -1), reverse=True)
+    hits = [r for r in by_rsi_asc if r["status"] == "oversold"]
+    watch_list = [r for r in by_rsi_asc if r["status"] == "watch"]
+    overbought_hits = [r for r in by_rsi_desc if r["status"] == "overbought"]
+    overbought_watch = [r for r in by_rsi_desc if r["status"] == "watch_overbought"]
+    return all_rows, hits, watch_list, overbought_hits, overbought_watch
 
 
 def run_analysis_for_hit(row: dict, settings: dict, model: str) -> dict:
@@ -220,10 +235,12 @@ def main():
             "live": attach_rsi(df_raw, period=period),
         }
 
-    all_rows, hits, watch_list = build_scan_rows(
+    all_rows, hits, watch_list, overbought_hits, overbought_watch = build_scan_rows(
         flat, price_data,
         oversold=settings["rsi"]["oversold_threshold"],
         watch=settings["rsi"]["watch_threshold"],
+        overbought=settings["rsi"]["overbought_threshold"],
+        approaching_overbought=settings["rsi"]["approaching_overbought_threshold"],
     )
 
     print(f"      Fetching inline fundamentals ({len(tickers)} tickers)...")
@@ -239,7 +256,11 @@ def main():
                 forced.append(match)
         hits = forced + hits
 
-    print(f"      {len(hits)} oversold, {len(watch_list)} watch, {len(all_rows) - len(hits) - len(watch_list)} ok")
+    other = len(all_rows) - len(hits) - len(watch_list) - len(overbought_hits) - len(overbought_watch)
+    print(
+        f"      {len(hits)} oversold, {len(watch_list)} watch-oversold, "
+        f"{len(overbought_hits)} overbought, {len(overbought_watch)} watch-overbought, {other} ok"
+    )
 
     # --- Analysis ---
     do_analysis = not args.skip_analysis
@@ -314,6 +335,31 @@ def main():
         for w in watch_list
     ]
 
+    rendered_overbought = []
+    for o in overbought_hits:
+        df = o["df"]
+        recent = df.dropna(subset=["RSI_14"]).tail(6)
+        move_5bar = (recent["Close"].iloc[-1] - recent["Close"].iloc[0]) / recent["Close"].iloc[0] * 100
+        rendered_overbought.append(
+            {
+                "ticker": o["ticker"],
+                "company": o["company"],
+                "sector": o["sector"],
+                "price": o["price"],
+                "rsi": o["rsi"],
+                "move_5bar_pct": float(move_5bar),
+                "bar_human": o["live_bar_ts"].tz_convert(PT).strftime("%Y-%m-%d %H:%M PT"),
+            }
+        )
+
+    rendered_overbought_watch = [
+        {
+            "ticker": w["ticker"], "company": w["company"],
+            "rsi": w["rsi"], "price": w["price"],
+        }
+        for w in overbought_watch
+    ]
+
     rsi_values = [r["rsi"] for r in all_rows if r["rsi"] is not None]
     median_rsi = statistics.median(rsi_values) if rsi_values else None
 
@@ -332,9 +378,13 @@ def main():
         "universe_size": len(flat),
         "oversold_threshold": settings["rsi"]["oversold_threshold"],
         "watch_threshold": settings["rsi"]["watch_threshold"],
+        "overbought_threshold": settings["rsi"]["overbought_threshold"],
+        "approaching_overbought_threshold": settings["rsi"]["approaching_overbought_threshold"],
         "rsi_period": settings["rsi"]["period"],
         "hits": rendered_hits,
         "watch": rendered_watch,
+        "overbought_hits": rendered_overbought,
+        "overbought_watch": rendered_overbought_watch,
         "rows": [
             {
                 "ticker": r["ticker"],

@@ -15,12 +15,23 @@
     --text-muted: #8b95a7;
     --text-dim: #5d6877;
     --accent: #7c8aff;
-    --alert: #f85149;
-    --alert-soft: rgba(248,81,73,0.12);
-    --warn: #f1c453;
-    --warn-soft: rgba(241,196,83,0.12);
-    --ok: #3fb950;
-    --ok-soft: rgba(63,185,80,0.12);
+
+    /* Sell semantics (overbought): red signal, orange watch */
+    --sell: #f85149;
+    --sell-soft: rgba(248,81,73,0.12);
+    --sell-light: #ff8a3d;
+    --sell-light-soft: rgba(255,138,61,0.14);
+
+    /* Buy semantics (oversold): green signal, soft green watch */
+    --buy: #3fb950;
+    --buy-soft: rgba(63,185,80,0.14);
+    --buy-light: #6fd189;
+    --buy-light-soft: rgba(111,209,137,0.12);
+
+    /* Legacy aliases — kept so change-pos/change-neg in the scan table keep their
+       intuitive meaning (green = up, red = down) independent of RSI semantics. */
+    --alert: var(--sell);
+    --ok: var(--buy);
   }
   * { box-sizing: border-box; }
   html, body {
@@ -61,8 +72,10 @@
     letter-spacing: 0.05em; margin-bottom: 6px;
   }
   .summary .stat .value { font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
-  .summary .stat.alert .value { color: var(--alert); }
-  .summary .stat.warn .value { color: var(--warn); }
+  .summary .stat.buy .value { color: var(--buy); }
+  .summary .stat.buy-light .value { color: var(--buy-light); }
+  .summary .stat.sell .value { color: var(--sell); }
+  .summary .stat.sell-light .value { color: var(--sell-light); }
 
   section { margin-top: 40px; }
   section h2 {
@@ -73,14 +86,16 @@
     font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 999px;
     background: var(--bg-card-soft); color: var(--text-muted);
   }
-  section h2 .count.alert { background: var(--alert-soft); color: var(--alert); }
-  section h2 .count.warn { background: var(--warn-soft); color: var(--warn); }
+  section h2 .count.buy { background: var(--buy-soft); color: var(--buy); }
+  section h2 .count.buy-light { background: var(--buy-light-soft); color: var(--buy-light); }
+  section h2 .count.sell { background: var(--sell-soft); color: var(--sell); }
+  section h2 .count.sell-light { background: var(--sell-light-soft); color: var(--sell-light); }
 
-  /* Hit card */
+  /* Hit card (oversold, with full analysis) */
   .hit {
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: 14px; padding: 28px; margin-bottom: 20px;
-    border-left: 3px solid var(--alert);
+    border-left: 3px solid var(--buy);
   }
   .hit > .header {
     display: flex; align-items: baseline; justify-content: space-between;
@@ -98,7 +113,8 @@
   .hit .key-stats .ks { text-align: right; }
   .hit .key-stats .ks .label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
   .hit .key-stats .ks .value { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
-  .hit .key-stats .ks .value.rsi-oversold { color: var(--alert); }
+  .hit .key-stats .ks .value.rsi-oversold { color: var(--buy); }
+  .hit .key-stats .ks .value.move-neg { color: var(--sell); }
   .hit .key-stats .ks .sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
   .hit .analysis-section {
@@ -134,7 +150,7 @@
     font-style: italic; color: var(--text-muted); font-size: 13px;
   }
 
-  /* Watchlist */
+  /* Watchlist (approaching oversold / approaching overbought) */
   .watch-grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 10px;
@@ -142,14 +158,55 @@
   .watch-card {
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: 10px; padding: 14px 16px;
-    border-left: 3px solid var(--warn);
     display: flex; align-items: center; justify-content: space-between;
   }
+  .watch-card.approaching-oversold { border-left: 3px solid var(--buy-light); }
+  .watch-card.approaching-overbought { border-left: 3px solid var(--sell-light); }
   .watch-card .lhs .ticker { font-weight: 600; font-size: 15px; }
   .watch-card .lhs .company { font-size: 12px; color: var(--text-muted); }
   .watch-card .rhs { text-align: right; }
-  .watch-card .rsi-val { font-size: 18px; font-weight: 600; color: var(--warn); }
+  .watch-card .rsi-val { font-size: 18px; font-weight: 600; }
+  .watch-card.approaching-oversold .rsi-val { color: var(--buy-light); }
+  .watch-card.approaching-overbought .rsi-val { color: var(--sell-light); }
   .watch-card .price { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+  /* Compact overbought signal card (no analysis) */
+  .ob-grid {
+    display: grid; grid-template-columns: 1fr; gap: 10px;
+  }
+  .ob-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    border-left: 3px solid var(--sell);
+    display: grid; grid-template-columns: 1fr auto; gap: 16px;
+    align-items: center;
+  }
+  .ob-card .lhs .ticker { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
+  .ob-card .lhs .company { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .ob-card .lhs .sector-tag {
+    display: inline-block;
+    font-size: 10.5px; padding: 2px 8px; border-radius: 999px;
+    background: var(--bg-card-soft); color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.04em;
+    margin-top: 6px;
+  }
+  .ob-card .rhs { text-align: right; }
+  .ob-card .rsi-val { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; color: var(--sell); }
+  .ob-card .price { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .ob-card .sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .ob-card .sub.move-pos { color: var(--buy); }
+
+  /* Side-by-side layout for the overbought + approaching-overbought pair */
+  .side-by-side {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  .side-by-side .col h2 { margin-top: 0; }
+  @media (max-width: 880px) {
+    .side-by-side { grid-template-columns: 1fr; }
+  }
 
   /* Full scan table */
   details.full-scan { margin-top: 16px; }
@@ -212,13 +269,17 @@
   details.full-scan th.numeric { text-align: right; }
   details.full-scan td.ticker { font-weight: 600; }
   details.full-scan td.sector { color: var(--text-muted); font-size: 12px; }
-  details.full-scan tr.row-oversold td { background: var(--alert-soft); }
-  details.full-scan tr.row-watch td { background: var(--warn-soft); }
+  details.full-scan tr.row-oversold td { background: var(--buy-soft); }
+  details.full-scan tr.row-watch td { background: var(--buy-light-soft); }
+  details.full-scan tr.row-overbought td { background: var(--sell-soft); }
+  details.full-scan tr.row-watch-overbought td { background: var(--sell-light-soft); }
   details.full-scan tr.row-error td { color: var(--text-dim); font-style: italic; }
-  details.full-scan .rsi-cell.oversold { color: var(--alert); font-weight: 600; }
-  details.full-scan .rsi-cell.watch { color: var(--warn); font-weight: 500; }
-  details.full-scan .change-pos { color: var(--ok); }
-  details.full-scan .change-neg { color: var(--alert); }
+  details.full-scan .rsi-cell.oversold { color: var(--buy); font-weight: 600; }
+  details.full-scan .rsi-cell.watch { color: var(--buy-light); font-weight: 500; }
+  details.full-scan .rsi-cell.overbought { color: var(--sell); font-weight: 600; }
+  details.full-scan .rsi-cell.watch-overbought { color: var(--sell-light); font-weight: 500; }
+  details.full-scan .change-pos { color: var(--buy); }
+  details.full-scan .change-neg { color: var(--sell); }
 
   /* Collapsible fundamentals columns */
   .fund-col { display: none; }
@@ -241,7 +302,13 @@
     border-radius: 12px; padding: 36px; text-align: center;
     color: var(--text-muted);
   }
-  .empty-state .emoji-free-mark { font-size: 28px; font-weight: 600; color: var(--ok); margin-bottom: 6px; letter-spacing: -0.01em; }
+  .empty-state .emoji-free-mark { font-size: 28px; font-weight: 600; color: var(--buy); margin-bottom: 6px; letter-spacing: -0.01em; }
+
+  .empty-state-compact {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px; text-align: center;
+    color: var(--text-muted); font-size: 13px;
+  }
 
   footer.page {
     margin-top: 64px; padding-top: 24px;
@@ -269,27 +336,27 @@
   </header>
 
   <div class="summary">
-    <div class="stat {% if hits|length %}alert{% endif %}">
+    <div class="stat {% if hits|length %}buy{% endif %}">
       <div class="label">Oversold (RSI &lt; {{ oversold_threshold }})</div>
       <div class="value">{{ hits|length }}</div>
     </div>
-    <div class="stat {% if watch|length %}warn{% endif %}">
+    <div class="stat {% if watch|length %}buy-light{% endif %}">
       <div class="label">Watch ({{ oversold_threshold }} – {{ watch_threshold }})</div>
       <div class="value">{{ watch|length }}</div>
     </div>
-    <div class="stat">
-      <div class="label">Universe</div>
-      <div class="value">{{ universe_size }}</div>
+    <div class="stat {% if overbought_hits|length %}sell{% endif %}">
+      <div class="label">Overbought (RSI &gt; {{ overbought_threshold }})</div>
+      <div class="value">{{ overbought_hits|length }}</div>
     </div>
-    <div class="stat">
-      <div class="label">Median RSI</div>
-      <div class="value">{{ "%.1f"|format(median_rsi) if median_rsi is not none else "—" }}</div>
+    <div class="stat {% if overbought_watch|length %}sell-light{% endif %}">
+      <div class="label">Watch ({{ approaching_overbought_threshold }} – {{ overbought_threshold }})</div>
+      <div class="value">{{ overbought_watch|length }}</div>
     </div>
   </div>
 
   {% if hits %}
     <section>
-      <h2>Oversold signals <span class="count alert">{{ hits|length }}</span></h2>
+      <h2>Oversold signals <span class="count buy">{{ hits|length }}</span></h2>
       {% for h in hits %}
         <div class="hit">
           <div class="header">
@@ -311,7 +378,7 @@
               </div>
               <div class="ks">
                 <div class="label">5-bar move</div>
-                <div class="value {% if h.move_5bar_pct < 0 %}rsi-oversold{% endif %}">{{ "%+.1f"|format(h.move_5bar_pct) }}%</div>
+                <div class="value {% if h.move_5bar_pct < 0 %}move-neg{% endif %}">{{ "%+.1f"|format(h.move_5bar_pct) }}%</div>
                 <div class="sub">last ~2.5 trading days</div>
               </div>
             </div>
@@ -357,10 +424,10 @@
 
   {% if watch %}
     <section>
-      <h2>Approaching oversold <span class="count warn">{{ watch|length }}</span></h2>
+      <h2>Approaching oversold <span class="count buy-light">{{ watch|length }}</span></h2>
       <div class="watch-grid">
         {% for w in watch %}
-          <div class="watch-card">
+          <div class="watch-card approaching-oversold">
             <div class="lhs">
               <div class="ticker">{{ w.ticker }}</div>
               <div class="company">{{ w.company }}</div>
@@ -374,6 +441,70 @@
       </div>
     </section>
   {% endif %}
+
+  <section class="side-by-side">
+    <div class="col">
+      <h2>Overbought signals
+        {% if overbought_hits %}
+          <span class="count sell">{{ overbought_hits|length }}</span>
+        {% else %}
+          <span class="count">0</span>
+        {% endif %}
+      </h2>
+      {% if overbought_hits %}
+        <div class="ob-grid">
+          {% for o in overbought_hits %}
+            <div class="ob-card">
+              <div class="lhs">
+                <div class="ticker">{{ o.ticker }}</div>
+                <div class="company">{{ o.company }}</div>
+                <div class="sector-tag">{{ o.sector }}</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">{{ "%.2f"|format(o.rsi) }}</div>
+                <div class="price">${{ "%.2f"|format(o.price) }}</div>
+                <div class="sub {% if o.move_5bar_pct >= 0 %}move-pos{% endif %}">{{ "%+.1f"|format(o.move_5bar_pct) }}% / 5 bar</div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state-compact">
+          No tickers above RSI {{ overbought_threshold }} on the latest 4h bar.
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="col">
+      <h2>Approaching overbought
+        {% if overbought_watch %}
+          <span class="count sell-light">{{ overbought_watch|length }}</span>
+        {% else %}
+          <span class="count">0</span>
+        {% endif %}
+      </h2>
+      {% if overbought_watch %}
+        <div class="watch-grid">
+          {% for w in overbought_watch %}
+            <div class="watch-card approaching-overbought">
+              <div class="lhs">
+                <div class="ticker">{{ w.ticker }}</div>
+                <div class="company">{{ w.company }}</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">{{ "%.1f"|format(w.rsi) }}</div>
+                <div class="price">${{ "%.2f"|format(w.price) }}</div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state-compact">
+          No tickers between RSI {{ approaching_overbought_threshold }} – {{ overbought_threshold }}.
+        </div>
+      {% endif %}
+    </div>
+  </section>
 
   <section>
     <h2>Full scan <span class="count">{{ rows|length }}</span></h2>
@@ -403,7 +534,7 @@
         </thead>
         <tbody>
           {% for r in rows %}
-            <tr class="{% if r.status == 'oversold' %}row-oversold{% elif r.status == 'watch' %}row-watch{% elif r.status == 'error' %}row-error{% endif %}" data-search="{{ r.ticker|lower }} {{ r.company|lower }} {{ r.sector|lower }}">
+            <tr class="{% if r.status == 'oversold' %}row-oversold{% elif r.status == 'watch' %}row-watch{% elif r.status == 'overbought' %}row-overbought{% elif r.status == 'watch_overbought' %}row-watch-overbought{% elif r.status == 'error' %}row-error{% endif %}" data-search="{{ r.ticker|lower }} {{ r.company|lower }} {{ r.sector|lower }}">
               <td class="ticker">{{ r.ticker }}</td>
               <td>{{ r.company }}</td>
               <td class="sector">{{ r.sector }}</td>
@@ -413,7 +544,7 @@
               </td>
               <td class="numeric">
                 {% if r.rsi is not none %}
-                  <span class="rsi-cell {% if r.status == 'oversold' %}oversold{% elif r.status == 'watch' %}watch{% endif %}">{{ "%.2f"|format(r.rsi) }}</span>
+                  <span class="rsi-cell {% if r.status == 'oversold' %}oversold{% elif r.status == 'watch' %}watch{% elif r.status == 'overbought' %}overbought{% elif r.status == 'watch_overbought' %}watch-overbought{% endif %}">{{ "%.2f"|format(r.rsi) }}</span>
                 {% else %}—{% endif %}
               </td>
               <td class="fund-col numeric">{{ r.market_cap | fmt_market_cap }}</td>
