@@ -61,7 +61,7 @@
 
   .summary {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
-    margin: 28px 0 36px;
+    margin: 28px 0 24px;
   }
   .summary .stat {
     background: var(--bg-card); border: 1px solid var(--border);
@@ -73,11 +73,21 @@
   }
   .summary .stat .value { font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
   .summary .stat.buy .value { color: var(--buy); }
-  .summary .stat.buy-light .value { color: var(--buy-light); }
   .summary .stat.sell .value { color: var(--sell); }
-  .summary .stat.sell-light .value { color: var(--sell-light); }
 
-  section { margin-top: 40px; }
+  /* Tip banner about local Claude analysis commands */
+  .tip-banner {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px; padding: 12px 16px; margin-bottom: 28px;
+    color: var(--text-muted); font-size: 13px;
+  }
+  .tip-banner code {
+    background: var(--bg-card-soft); padding: 1px 6px; border-radius: 4px;
+    color: var(--text);
+  }
+
+  section { margin-top: 36px; }
   section h2 {
     font-size: 18px; font-weight: 600; letter-spacing: -0.01em;
     margin: 0 0 16px; display: flex; align-items: center; gap: 10px;
@@ -91,69 +101,43 @@
   section h2 .count.sell { background: var(--sell-soft); color: var(--sell); }
   section h2 .count.sell-light { background: var(--sell-light-soft); color: var(--sell-light); }
 
-  /* Hit card (oversold, with full analysis) */
-  .hit {
+  /* Side-by-side layout for the signal + approaching rows */
+  .side-by-side {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  .side-by-side .col h2 { margin-top: 0; }
+  @media (max-width: 880px) {
+    .side-by-side { grid-template-columns: 1fr; }
+  }
+
+  /* Unified compact signal card (used for both oversold and overbought) */
+  .signal-grid { display: grid; gap: 10px; }
+  .signal-card {
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 28px; margin-bottom: 20px;
-    border-left: 3px solid var(--buy);
+    border-radius: 10px; padding: 14px 16px;
+    display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center;
   }
-  .hit > .header {
-    display: flex; align-items: baseline; justify-content: space-between;
-    gap: 24px; flex-wrap: wrap; margin-bottom: 18px;
-  }
-  .hit .title { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
-  .hit .ticker { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
-  .hit .company { color: var(--text-muted); font-size: 15px; }
-  .hit .sector-tag {
-    font-size: 11px; padding: 3px 10px; border-radius: 999px;
+  .signal-card.oversold { border-left: 3px solid var(--buy); }
+  .signal-card.overbought { border-left: 3px solid var(--sell); }
+  .signal-card .lhs .ticker { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
+  .signal-card .lhs .company { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .signal-card .lhs .sector-tag {
+    display: inline-block; font-size: 10.5px; padding: 2px 8px; border-radius: 999px;
     background: var(--bg-card-soft); color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 0.04em;
+    text-transform: uppercase; letter-spacing: 0.04em; margin-top: 6px;
   }
-  .hit .key-stats { display: flex; gap: 24px; flex-wrap: wrap; }
-  .hit .key-stats .ks { text-align: right; }
-  .hit .key-stats .ks .label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
-  .hit .key-stats .ks .value { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
-  .hit .key-stats .ks .value.rsi-oversold { color: var(--buy); }
-  .hit .key-stats .ks .value.move-neg { color: var(--sell); }
-  .hit .key-stats .ks .sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .signal-card .rhs { text-align: right; }
+  .signal-card .rsi-val { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .signal-card.oversold .rsi-val { color: var(--buy); }
+  .signal-card.overbought .rsi-val { color: var(--sell); }
+  .signal-card .rsi-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; letter-spacing: 0.04em; text-transform: uppercase; }
 
-  .hit .analysis-section {
-    margin-top: 20px; padding-top: 20px;
-    border-top: 1px solid var(--border);
-  }
-  .hit .analysis-section h3 {
-    font-size: 13px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.08em; color: var(--text-muted); margin: 0 0 14px;
-  }
-  .hit .analysis-section .body {
-    font-size: 14.5px; line-height: 1.65;
-  }
-  .hit .analysis-section .body p { margin: 0 0 12px; }
-  .hit .analysis-section .body p:last-child { margin-bottom: 0; }
-  .hit .analysis-section .body h2 {
-    font-size: 14px; font-weight: 600; margin: 18px 0 8px;
-    color: var(--text); text-transform: none; letter-spacing: 0;
-  }
-  .hit .analysis-section .body h2:first-child { margin-top: 0; }
-  .hit .analysis-section .body ul { margin: 8px 0 12px; padding-left: 20px; }
-  .hit .analysis-section .body li { margin-bottom: 4px; }
-  .hit .analysis-section .body code { background: var(--bg-card-soft); padding: 1px 6px; border-radius: 4px; }
-
-  .citations {
-    margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border);
-    font-size: 12px; color: var(--text-muted);
-  }
-  .citations strong { color: var(--text-muted); font-weight: 500; }
-  .citations a { display: inline-block; margin-right: 14px; }
-
-  .analysis-skipped {
-    font-style: italic; color: var(--text-muted); font-size: 13px;
-  }
-
-  /* Watchlist (approaching oversold / approaching overbought) */
+  /* Approaching cards (watch list) */
   .watch-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 10px;
+    display: grid; grid-template-columns: 1fr; gap: 10px;
   }
   .watch-card {
     background: var(--bg-card); border: 1px solid var(--border);
@@ -168,44 +152,11 @@
   .watch-card .rsi-val { font-size: 18px; font-weight: 600; }
   .watch-card.approaching-oversold .rsi-val { color: var(--buy-light); }
   .watch-card.approaching-overbought .rsi-val { color: var(--sell-light); }
-  .watch-card .price { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
 
-  /* Compact overbought signal card (no analysis) */
-  .ob-grid {
-    display: grid; grid-template-columns: 1fr; gap: 10px;
-  }
-  .ob-card {
+  .empty-state-compact {
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 10px; padding: 14px 16px;
-    border-left: 3px solid var(--sell);
-    display: grid; grid-template-columns: 1fr auto; gap: 16px;
-    align-items: center;
-  }
-  .ob-card .lhs .ticker { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
-  .ob-card .lhs .company { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-  .ob-card .lhs .sector-tag {
-    display: inline-block;
-    font-size: 10.5px; padding: 2px 8px; border-radius: 999px;
-    background: var(--bg-card-soft); color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 0.04em;
-    margin-top: 6px;
-  }
-  .ob-card .rhs { text-align: right; }
-  .ob-card .rsi-val { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; color: var(--sell); }
-  .ob-card .price { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
-  .ob-card .sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-  .ob-card .sub.move-pos { color: var(--buy); }
-
-  /* Side-by-side layout for the overbought + approaching-overbought pair */
-  .side-by-side {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    align-items: start;
-  }
-  .side-by-side .col h2 { margin-top: 0; }
-  @media (max-width: 880px) {
-    .side-by-side { grid-template-columns: 1fr; }
+    border-radius: 10px; padding: 18px; text-align: center;
+    color: var(--text-muted); font-size: 13px;
   }
 
   /* Full scan table */
@@ -310,19 +261,6 @@
   }
   .toggle-fund-btn:hover { color: var(--text); border-color: var(--accent); }
 
-  .empty-state {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 36px; text-align: center;
-    color: var(--text-muted);
-  }
-  .empty-state .emoji-free-mark { font-size: 28px; font-weight: 600; color: var(--buy); margin-bottom: 6px; letter-spacing: -0.01em; }
-
-  .empty-state-compact {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 10px; padding: 18px; text-align: center;
-    color: var(--text-muted); font-size: 13px;
-  }
-
   footer.page {
     margin-top: 64px; padding-top: 24px;
     border-top: 1px solid var(--border);
@@ -367,95 +305,44 @@
     </div>
   </div>
 
-  {% if hits %}
-    <section>
-      <h2>Oversold signals <span class="count buy">{{ hits|length }}</span></h2>
-      {% for h in hits %}
-        <div class="hit">
-          <div class="header">
-            <div class="title">
-              <div class="ticker">{{ h.ticker }}</div>
-              <div class="company">{{ h.company }}</div>
-              <div class="sector-tag">{{ h.sector }}</div>
-            </div>
-            <div class="key-stats">
-              <div class="ks">
-                <div class="label">Price</div>
-                <div class="value">${{ "%.2f"|format(h.price) }}</div>
-                <div class="sub">{{ h.bar_human }}</div>
-              </div>
-              <div class="ks">
-                <div class="label">RSI(14)</div>
-                <div class="value rsi-oversold">{{ "%.2f"|format(h.rsi) }}</div>
-                <div class="sub">threshold &lt; {{ oversold_threshold }}</div>
-              </div>
-              <div class="ks">
-                <div class="label">5-bar move</div>
-                <div class="value {% if h.move_5bar_pct < 0 %}move-neg{% endif %}">{{ "%+.1f"|format(h.move_5bar_pct) }}%</div>
-                <div class="sub">last ~2.5 trading days</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="analysis-section">
-            <h3>Why it fell</h3>
-            {% if h.why_it_fell_html %}
-              <div class="body">{{ h.why_it_fell_html|safe }}</div>
-              {% if h.why_it_fell_citations %}
-                <div class="citations">
-                  <strong>Sources:</strong>
-                  {% for c in h.why_it_fell_citations %}
-                    <a href="{{ c.url }}" target="_blank" rel="noopener noreferrer">{{ c.title or c.url }}</a>
-                  {% endfor %}
-                </div>
-              {% endif %}
-            {% else %}
-              <div class="analysis-skipped">{{ (h.why_it_fell_skip_reason or "Analysis not run.")|safe }}</div>
-            {% endif %}
-          </div>
-
-          <div class="analysis-section">
-            <h3>Deep dive</h3>
-            {% if h.deep_dive_html %}
-              <div class="body">{{ h.deep_dive_html|safe }}</div>
-            {% else %}
-              <div class="analysis-skipped">{{ (h.deep_dive_skip_reason or "Analysis not run.")|safe }}</div>
-            {% endif %}
-          </div>
-        </div>
-      {% endfor %}
-    </section>
-  {% else %}
-    <section>
-      <h2>Oversold signals <span class="count">0</span></h2>
-      <div class="empty-state">
-        <div class="emoji-free-mark">No hits</div>
-        <div>None of the {{ universe_size }} tracked tickers closed below RSI {{ oversold_threshold }} on the latest 4h bar.</div>
-      </div>
-    </section>
-  {% endif %}
-
-  {% if watch %}
-    <section>
-      <h2>Approaching oversold <span class="count buy-light">{{ watch|length }}</span></h2>
-      <div class="watch-grid">
-        {% for w in watch %}
-          <div class="watch-card approaching-oversold">
-            <div class="lhs">
-              <div class="ticker">{{ w.ticker }}</div>
-              <div class="company">{{ w.company }}</div>
-            </div>
-            <div class="rhs">
-              <div class="rsi-val">{{ "%.1f"|format(w.rsi) }}</div>
-              <div class="price">${{ "%.2f"|format(w.price) }}</div>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-    </section>
-  {% endif %}
+  <div class="tip-banner">
+    For a deeper take on any ticker, open this repo in Claude Code and run
+    <code>/analyze-stock TICKER</code> (fundamental deep-dive) or
+    <code>/why-fell TICKER</code> (recent drawdown explanation).
+  </div>
 
   <section class="side-by-side">
+    <div class="col">
+      <h2>Oversold signals
+        {% if hits %}
+          <span class="count buy">{{ hits|length }}</span>
+        {% else %}
+          <span class="count">0</span>
+        {% endif %}
+      </h2>
+      {% if hits %}
+        <div class="signal-grid">
+          {% for h in hits %}
+            <div class="signal-card oversold">
+              <div class="lhs">
+                <div class="ticker">{{ h.ticker }}</div>
+                <div class="company">{{ h.company }}</div>
+                <div class="sector-tag">{{ h.sector }}</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">{{ "%.2f"|format(h.rsi) }}</div>
+                <div class="rsi-sub">RSI(14)</div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state-compact">
+          No tickers below RSI {{ oversold_threshold }} on the latest 4h bar.
+        </div>
+      {% endif %}
+    </div>
+
     <div class="col">
       <h2>Overbought signals
         {% if overbought_hits %}
@@ -465,9 +352,9 @@
         {% endif %}
       </h2>
       {% if overbought_hits %}
-        <div class="ob-grid">
+        <div class="signal-grid">
           {% for o in overbought_hits %}
-            <div class="ob-card">
+            <div class="signal-card overbought">
               <div class="lhs">
                 <div class="ticker">{{ o.ticker }}</div>
                 <div class="company">{{ o.company }}</div>
@@ -475,8 +362,7 @@
               </div>
               <div class="rhs">
                 <div class="rsi-val">{{ "%.2f"|format(o.rsi) }}</div>
-                <div class="price">${{ "%.2f"|format(o.price) }}</div>
-                <div class="sub {% if o.move_5bar_pct >= 0 %}move-pos{% endif %}">{{ "%+.1f"|format(o.move_5bar_pct) }}% / 5 bar</div>
+                <div class="rsi-sub">RSI(14)</div>
               </div>
             </div>
           {% endfor %}
@@ -484,6 +370,37 @@
       {% else %}
         <div class="empty-state-compact">
           No tickers above RSI {{ overbought_threshold }} on the latest 4h bar.
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="side-by-side">
+    <div class="col">
+      <h2>Approaching oversold
+        {% if watch %}
+          <span class="count buy-light">{{ watch|length }}</span>
+        {% else %}
+          <span class="count">0</span>
+        {% endif %}
+      </h2>
+      {% if watch %}
+        <div class="watch-grid">
+          {% for w in watch %}
+            <div class="watch-card approaching-oversold">
+              <div class="lhs">
+                <div class="ticker">{{ w.ticker }}</div>
+                <div class="company">{{ w.company }}</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">{{ "%.1f"|format(w.rsi) }}</div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state-compact">
+          No tickers between RSI {{ oversold_threshold }} – {{ watch_threshold }}.
         </div>
       {% endif %}
     </div>
@@ -506,7 +423,6 @@
               </div>
               <div class="rhs">
                 <div class="rsi-val">{{ "%.1f"|format(w.rsi) }}</div>
-                <div class="price">${{ "%.2f"|format(w.price) }}</div>
               </div>
             </div>
           {% endfor %}
@@ -521,7 +437,7 @@
 
   <section>
     <h2>Full scan <span class="count">{{ rows|length }}</span></h2>
-    <details class="full-scan" {% if not hits %}open{% endif %}>
+    <details class="full-scan" open>
       <summary>
         Show all {{ rows|length }} tickers
         <button class="toggle-fund-btn" onclick="toggleFundamentals(event, this)">+ Fundamentals</button>
@@ -626,7 +542,7 @@
               var va = (ra === null || ra === '') ? NaN : parseFloat(ra);
               var vb = (rb === null || rb === '') ? NaN : parseFloat(rb);
               var aNaN = isNaN(va), bNaN = isNaN(vb);
-              // Always push missing values to the bottom regardless of direction
+              // Missing values always sink to the bottom regardless of direction
               if (aNaN && bNaN) return 0;
               if (aNaN) return 1;
               if (bNaN) return -1;
@@ -649,7 +565,6 @@
               sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
             } else {
               sortState.col = { idx: idx, kind: kind, th: th };
-              // Sensible default: numeric desc (largest first), text asc (A→Z)
               sortState.dir = kind === 'numeric' ? 'desc' : 'asc';
             }
             headers.forEach(function(h) {
