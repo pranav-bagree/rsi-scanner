@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI Infra — 4h RSI Scanner — 2026-05-12 09:02 PT</title>
+<title>AI Infra — 4h RSI Scanner — 2026-05-14 13:24 PT</title>
 <style>
   :root {
     --bg: #0a0e1a;
@@ -15,12 +15,23 @@
     --text-muted: #8b95a7;
     --text-dim: #5d6877;
     --accent: #7c8aff;
-    --alert: #f85149;
-    --alert-soft: rgba(248,81,73,0.12);
-    --warn: #f1c453;
-    --warn-soft: rgba(241,196,83,0.12);
-    --ok: #3fb950;
-    --ok-soft: rgba(63,185,80,0.12);
+
+    /* Sell semantics (overbought): red signal, orange watch */
+    --sell: #f85149;
+    --sell-soft: rgba(248,81,73,0.12);
+    --sell-light: #ff8a3d;
+    --sell-light-soft: rgba(255,138,61,0.14);
+
+    /* Buy semantics (oversold): green signal, soft green watch */
+    --buy: #3fb950;
+    --buy-soft: rgba(63,185,80,0.14);
+    --buy-light: #6fd189;
+    --buy-light-soft: rgba(111,209,137,0.12);
+
+    /* Legacy aliases — kept so change-pos/change-neg in the scan table keep their
+       intuitive meaning (green = up, red = down) independent of RSI semantics. */
+    --alert: var(--sell);
+    --ok: var(--buy);
   }
   * { box-sizing: border-box; }
   html, body {
@@ -61,8 +72,10 @@
     letter-spacing: 0.05em; margin-bottom: 6px;
   }
   .summary .stat .value { font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
-  .summary .stat.alert .value { color: var(--alert); }
-  .summary .stat.warn .value { color: var(--warn); }
+  .summary .stat.buy .value { color: var(--buy); }
+  .summary .stat.buy-light .value { color: var(--buy-light); }
+  .summary .stat.sell .value { color: var(--sell); }
+  .summary .stat.sell-light .value { color: var(--sell-light); }
 
   section { margin-top: 40px; }
   section h2 {
@@ -73,14 +86,16 @@
     font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 999px;
     background: var(--bg-card-soft); color: var(--text-muted);
   }
-  section h2 .count.alert { background: var(--alert-soft); color: var(--alert); }
-  section h2 .count.warn { background: var(--warn-soft); color: var(--warn); }
+  section h2 .count.buy { background: var(--buy-soft); color: var(--buy); }
+  section h2 .count.buy-light { background: var(--buy-light-soft); color: var(--buy-light); }
+  section h2 .count.sell { background: var(--sell-soft); color: var(--sell); }
+  section h2 .count.sell-light { background: var(--sell-light-soft); color: var(--sell-light); }
 
-  /* Hit card */
+  /* Hit card (oversold, with full analysis) */
   .hit {
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: 14px; padding: 28px; margin-bottom: 20px;
-    border-left: 3px solid var(--alert);
+    border-left: 3px solid var(--buy);
   }
   .hit > .header {
     display: flex; align-items: baseline; justify-content: space-between;
@@ -98,7 +113,8 @@
   .hit .key-stats .ks { text-align: right; }
   .hit .key-stats .ks .label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
   .hit .key-stats .ks .value { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
-  .hit .key-stats .ks .value.rsi-oversold { color: var(--alert); }
+  .hit .key-stats .ks .value.rsi-oversold { color: var(--buy); }
+  .hit .key-stats .ks .value.move-neg { color: var(--sell); }
   .hit .key-stats .ks .sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
   .hit .analysis-section {
@@ -134,7 +150,7 @@
     font-style: italic; color: var(--text-muted); font-size: 13px;
   }
 
-  /* Watchlist */
+  /* Watchlist (approaching oversold / approaching overbought) */
   .watch-grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 10px;
@@ -142,14 +158,55 @@
   .watch-card {
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: 10px; padding: 14px 16px;
-    border-left: 3px solid var(--warn);
     display: flex; align-items: center; justify-content: space-between;
   }
+  .watch-card.approaching-oversold { border-left: 3px solid var(--buy-light); }
+  .watch-card.approaching-overbought { border-left: 3px solid var(--sell-light); }
   .watch-card .lhs .ticker { font-weight: 600; font-size: 15px; }
   .watch-card .lhs .company { font-size: 12px; color: var(--text-muted); }
   .watch-card .rhs { text-align: right; }
-  .watch-card .rsi-val { font-size: 18px; font-weight: 600; color: var(--warn); }
+  .watch-card .rsi-val { font-size: 18px; font-weight: 600; }
+  .watch-card.approaching-oversold .rsi-val { color: var(--buy-light); }
+  .watch-card.approaching-overbought .rsi-val { color: var(--sell-light); }
   .watch-card .price { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+  /* Compact overbought signal card (no analysis) */
+  .ob-grid {
+    display: grid; grid-template-columns: 1fr; gap: 10px;
+  }
+  .ob-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    border-left: 3px solid var(--sell);
+    display: grid; grid-template-columns: 1fr auto; gap: 16px;
+    align-items: center;
+  }
+  .ob-card .lhs .ticker { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
+  .ob-card .lhs .company { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .ob-card .lhs .sector-tag {
+    display: inline-block;
+    font-size: 10.5px; padding: 2px 8px; border-radius: 999px;
+    background: var(--bg-card-soft); color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.04em;
+    margin-top: 6px;
+  }
+  .ob-card .rhs { text-align: right; }
+  .ob-card .rsi-val { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; color: var(--sell); }
+  .ob-card .price { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .ob-card .sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .ob-card .sub.move-pos { color: var(--buy); }
+
+  /* Side-by-side layout for the overbought + approaching-overbought pair */
+  .side-by-side {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  .side-by-side .col h2 { margin-top: 0; }
+  @media (max-width: 880px) {
+    .side-by-side { grid-template-columns: 1fr; }
+  }
 
   /* Full scan table */
   details.full-scan { margin-top: 16px; }
@@ -208,17 +265,34 @@
     text-transform: uppercase; letter-spacing: 0.05em; font-size: 11px;
     background: var(--bg-card-soft);
   }
+  details.full-scan th.sortable {
+    cursor: pointer; user-select: none;
+    transition: color 0.12s, background 0.12s;
+  }
+  details.full-scan th.sortable:hover { color: var(--text); background: var(--bg-card); }
+  details.full-scan th .sort-arrow {
+    display: inline-block; margin-left: 4px; font-size: 10px;
+    color: var(--text-dim); transition: color 0.12s;
+    font-variant-numeric: tabular-nums;
+  }
+  details.full-scan th.sort-asc .sort-arrow,
+  details.full-scan th.sort-desc .sort-arrow { color: var(--accent); }
+  details.full-scan th.sort-asc, details.full-scan th.sort-desc { color: var(--text); }
   details.full-scan td.numeric { text-align: right; font-variant-numeric: tabular-nums; }
   details.full-scan th.numeric { text-align: right; }
   details.full-scan td.ticker { font-weight: 600; }
   details.full-scan td.sector { color: var(--text-muted); font-size: 12px; }
-  details.full-scan tr.row-oversold td { background: var(--alert-soft); }
-  details.full-scan tr.row-watch td { background: var(--warn-soft); }
+  details.full-scan tr.row-oversold td { background: var(--buy-soft); }
+  details.full-scan tr.row-watch td { background: var(--buy-light-soft); }
+  details.full-scan tr.row-overbought td { background: var(--sell-soft); }
+  details.full-scan tr.row-watch-overbought td { background: var(--sell-light-soft); }
   details.full-scan tr.row-error td { color: var(--text-dim); font-style: italic; }
-  details.full-scan .rsi-cell.oversold { color: var(--alert); font-weight: 600; }
-  details.full-scan .rsi-cell.watch { color: var(--warn); font-weight: 500; }
-  details.full-scan .change-pos { color: var(--ok); }
-  details.full-scan .change-neg { color: var(--alert); }
+  details.full-scan .rsi-cell.oversold { color: var(--buy); font-weight: 600; }
+  details.full-scan .rsi-cell.watch { color: var(--buy-light); font-weight: 500; }
+  details.full-scan .rsi-cell.overbought { color: var(--sell); font-weight: 600; }
+  details.full-scan .rsi-cell.watch-overbought { color: var(--sell-light); font-weight: 500; }
+  details.full-scan .change-pos { color: var(--buy); }
+  details.full-scan .change-neg { color: var(--sell); }
 
   /* Collapsible fundamentals columns */
   .fund-col { display: none; }
@@ -241,7 +315,13 @@
     border-radius: 12px; padding: 36px; text-align: center;
     color: var(--text-muted);
   }
-  .empty-state .emoji-free-mark { font-size: 28px; font-weight: 600; color: var(--ok); margin-bottom: 6px; letter-spacing: -0.01em; }
+  .empty-state .emoji-free-mark { font-size: 28px; font-weight: 600; color: var(--buy); margin-bottom: 6px; letter-spacing: -0.01em; }
+
+  .empty-state-compact {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px; text-align: center;
+    color: var(--text-muted); font-size: 13px;
+  }
 
   footer.page {
     margin-top: 64px; padding-top: 24px;
@@ -258,11 +338,9 @@
     <div>
       <h1>AI Infra — 4h RSI Scanner</h1>
       <div class="meta">
-        Scan run <span class="mono">2026-05-12 09:02 PT</span> ·
+        Scan run <span class="mono">2026-05-14 13:24 PT</span> ·
         <span class="mono">80</span> tickers ·
-        last closed 4h bar: <span class="mono">2026-05-11 10:30 PT</span>
-        ·
-          live (in-progress) bar: <span class="mono">2026-05-12 06:30 PT</span>
+        last closed 4h bar: <span class="mono">2026-05-14 10:30 PT</span>
         
       </div>
     </div>
@@ -273,9 +351,9 @@
       <div class="label">Oversold (RSI &lt; 25)</div>
       <div class="value">0</div>
     </div>
-    <div class="stat warn">
-      <div class="label">Watch (25 – 35)</div>
-      <div class="value">8</div>
+    <div class="stat sell">
+      <div class="label">Overbought (RSI &gt; 75)</div>
+      <div class="value">9</div>
     </div>
     <div class="stat">
       <div class="label">Universe</div>
@@ -283,7 +361,7 @@
     </div>
     <div class="stat">
       <div class="label">Median RSI</div>
-      <div class="value">52.4</div>
+      <div class="value">57.4</div>
     </div>
   </div>
 
@@ -299,100 +377,245 @@
 
   
     <section>
-      <h2>Approaching oversold <span class="count warn">8</span></h2>
+      <h2>Approaching oversold <span class="count buy-light">7</span></h2>
       <div class="watch-grid">
         
-          <div class="watch-card">
+          <div class="watch-card approaching-oversold">
             <div class="lhs">
-              <div class="ticker">NRG</div>
-              <div class="company">NRG Energy</div>
+              <div class="ticker">CEG</div>
+              <div class="company">Constellation Energy</div>
             </div>
             <div class="rhs">
-              <div class="rsi-val">27.8</div>
-              <div class="price">$135.09</div>
+              <div class="rsi-val">31.0</div>
+              <div class="price">$275.24</div>
             </div>
           </div>
         
-          <div class="watch-card">
-            <div class="lhs">
-              <div class="ticker">FISV</div>
-              <div class="company">Fiserv</div>
-            </div>
-            <div class="rhs">
-              <div class="rsi-val">29.0</div>
-              <div class="price">$54.35</div>
-            </div>
-          </div>
-        
-          <div class="watch-card">
-            <div class="lhs">
-              <div class="ticker">APH</div>
-              <div class="company">Amphenol</div>
-            </div>
-            <div class="rhs">
-              <div class="rsi-val">29.1</div>
-              <div class="price">$125.14</div>
-            </div>
-          </div>
-        
-          <div class="watch-card">
+          <div class="watch-card approaching-oversold">
             <div class="lhs">
               <div class="ticker">FIS</div>
               <div class="company">Fidelity National IS</div>
             </div>
             <div class="rhs">
-              <div class="rsi-val">29.5</div>
-              <div class="price">$42.20</div>
+              <div class="rsi-val">32.8</div>
+              <div class="price">$41.81</div>
             </div>
           </div>
         
-          <div class="watch-card">
+          <div class="watch-card approaching-oversold">
+            <div class="lhs">
+              <div class="ticker">VST</div>
+              <div class="company">Vistra Energy</div>
+            </div>
+            <div class="rhs">
+              <div class="rsi-val">33.1</div>
+              <div class="price">$141.89</div>
+            </div>
+          </div>
+        
+          <div class="watch-card approaching-oversold">
             <div class="lhs">
               <div class="ticker">HUBS</div>
               <div class="company">HubSpot</div>
             </div>
             <div class="rhs">
-              <div class="rsi-val">29.7</div>
-              <div class="price">$183.03</div>
+              <div class="rsi-val">33.3</div>
+              <div class="price">$183.46</div>
             </div>
           </div>
         
-          <div class="watch-card">
+          <div class="watch-card approaching-oversold">
+            <div class="lhs">
+              <div class="ticker">FISV</div>
+              <div class="company">Fiserv</div>
+            </div>
+            <div class="rhs">
+              <div class="rsi-val">33.3</div>
+              <div class="price">$53.48</div>
+            </div>
+          </div>
+        
+          <div class="watch-card approaching-oversold">
+            <div class="lhs">
+              <div class="ticker">NRG</div>
+              <div class="company">NRG Energy</div>
+            </div>
+            <div class="rhs">
+              <div class="rsi-val">33.7</div>
+              <div class="price">$134.68</div>
+            </div>
+          </div>
+        
+          <div class="watch-card approaching-oversold">
             <div class="lhs">
               <div class="ticker">PYPL</div>
               <div class="company">PayPal</div>
             </div>
             <div class="rhs">
-              <div class="rsi-val">31.3</div>
-              <div class="price">$45.12</div>
-            </div>
-          </div>
-        
-          <div class="watch-card">
-            <div class="lhs">
-              <div class="ticker">META</div>
-              <div class="company">Meta Platforms</div>
-            </div>
-            <div class="rhs">
-              <div class="rsi-val">34.1</div>
-              <div class="price">$599.84</div>
-            </div>
-          </div>
-        
-          <div class="watch-card">
-            <div class="lhs">
-              <div class="ticker">ANET</div>
-              <div class="company">Arista Networks</div>
-            </div>
-            <div class="rhs">
-              <div class="rsi-val">34.8</div>
-              <div class="price">$138.98</div>
+              <div class="rsi-val">33.7</div>
+              <div class="price">$45.05</div>
             </div>
           </div>
         
       </div>
     </section>
   
+
+  <section class="side-by-side">
+    <div class="col">
+      <h2>Overbought signals
+        
+          <span class="count sell">9</span>
+        
+      </h2>
+      
+        <div class="ob-grid">
+          
+            <div class="ob-card">
+              <div class="lhs">
+                <div class="ticker">CSCO</div>
+                <div class="company">Cisco</div>
+                <div class="sector-tag">AI Networking & Interconnect</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">90.72</div>
+                <div class="price">$115.54</div>
+                <div class="sub move-pos">+16.9% / 5 bar</div>
+              </div>
+            </div>
+          
+            <div class="ob-card">
+              <div class="lhs">
+                <div class="ticker">PANW</div>
+                <div class="company">Palo Alto Networks</div>
+                <div class="sector-tag">Tech SaaS — Cybersecurity</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">89.80</div>
+                <div class="price">$238.25</div>
+                <div class="sub move-pos">+10.9% / 5 bar</div>
+              </div>
+            </div>
+          
+            <div class="ob-card">
+              <div class="lhs">
+                <div class="ticker">FTNT</div>
+                <div class="company">Fortinet</div>
+                <div class="sector-tag">Tech SaaS — Cybersecurity</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">88.31</div>
+                <div class="price">$121.88</div>
+                <div class="sub move-pos">+6.5% / 5 bar</div>
+              </div>
+            </div>
+          
+            <div class="ob-card">
+              <div class="lhs">
+                <div class="ticker">CRWD</div>
+                <div class="company">CrowdStrike</div>
+                <div class="sector-tag">Tech SaaS — Cybersecurity</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">87.14</div>
+                <div class="price">$579.79</div>
+                <div class="sub move-pos">+5.9% / 5 bar</div>
+              </div>
+            </div>
+          
+            <div class="ob-card">
+              <div class="lhs">
+                <div class="ticker">POET</div>
+                <div class="company">POET Technologies</div>
+                <div class="sector-tag">Optical Devices</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">85.93</div>
+                <div class="price">$20.57</div>
+                <div class="sub move-pos">+50.0% / 5 bar</div>
+              </div>
+            </div>
+          
+            <div class="ob-card">
+              <div class="lhs">
+                <div class="ticker">DDOG</div>
+                <div class="company">Datadog</div>
+                <div class="sector-tag">Tech SaaS — Data & Analytics</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">80.89</div>
+                <div class="price">$202.79</div>
+                <div class="sub move-pos">+2.7% / 5 bar</div>
+              </div>
+            </div>
+          
+            <div class="ob-card">
+              <div class="lhs">
+                <div class="ticker">NVDA</div>
+                <div class="company">Nvidia</div>
+                <div class="sector-tag">AI Compute / GPUs / Accelerators</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">77.42</div>
+                <div class="price">$235.74</div>
+                <div class="sub move-pos">+8.3% / 5 bar</div>
+              </div>
+            </div>
+          
+            <div class="ob-card">
+              <div class="lhs">
+                <div class="ticker">HPE</div>
+                <div class="company">Hewlett Packard Enterprise</div>
+                <div class="sector-tag">AI Servers & Systems</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">76.58</div>
+                <div class="price">$34.12</div>
+                <div class="sub move-pos">+14.2% / 5 bar</div>
+              </div>
+            </div>
+          
+            <div class="ob-card">
+              <div class="lhs">
+                <div class="ticker">MTSI</div>
+                <div class="company">MACOM</div>
+                <div class="sector-tag">Optical Supporting Components</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">75.21</div>
+                <div class="price">$383.64</div>
+                <div class="sub move-pos">+10.3% / 5 bar</div>
+              </div>
+            </div>
+          
+        </div>
+      
+    </div>
+
+    <div class="col">
+      <h2>Approaching overbought
+        
+          <span class="count sell-light">1</span>
+        
+      </h2>
+      
+        <div class="watch-grid">
+          
+            <div class="watch-card approaching-overbought">
+              <div class="lhs">
+                <div class="ticker">AKAM</div>
+                <div class="company">Akamai</div>
+              </div>
+              <div class="rhs">
+                <div class="rsi-val">72.3</div>
+                <div class="price">$155.67</div>
+              </div>
+            </div>
+          
+        </div>
+      
+    </div>
+  </section>
 
   <section>
     <h2>Full scan <span class="count">80</span></h2>
@@ -408,16 +631,16 @@
       <table id="scan-table">
         <thead>
           <tr>
-            <th>Ticker</th>
-            <th>Company</th>
-            <th>Sector</th>
-            <th class="numeric">Price</th>
-            <th class="numeric">Bar change</th>
-            <th class="numeric" title="14-period Wilder RSI on 4h bars — uses the in-progress bar when one is open">RSI(14)</th>
-            <th class="fund-col numeric">Mkt Cap</th>
-            <th class="fund-col numeric">P/E</th>
-            <th class="fund-col numeric">PEG</th>
-            <th class="fund-col numeric">Beta</th>
+            <th class="sortable" data-sort-kind="text" data-col-idx="0">Ticker<span class="sort-arrow">↕</span></th>
+            <th class="sortable" data-sort-kind="text" data-col-idx="1">Company<span class="sort-arrow">↕</span></th>
+            <th class="sortable" data-sort-kind="text" data-col-idx="2">Sector<span class="sort-arrow">↕</span></th>
+            <th class="numeric sortable" data-sort-kind="numeric" data-col-idx="3">Price<span class="sort-arrow">↕</span></th>
+            <th class="numeric sortable" data-sort-kind="numeric" data-col-idx="4">Bar change<span class="sort-arrow">↕</span></th>
+            <th class="numeric sortable" data-sort-kind="numeric" data-col-idx="5" title="14-period Wilder RSI on 4h bars — uses the in-progress bar when one is open">RSI(14)<span class="sort-arrow">↕</span></th>
+            <th class="fund-col numeric sortable" data-sort-kind="numeric" data-col-idx="6">Mkt Cap<span class="sort-arrow">↕</span></th>
+            <th class="fund-col numeric sortable" data-sort-kind="numeric" data-col-idx="7">P/E<span class="sort-arrow">↕</span></th>
+            <th class="fund-col numeric sortable" data-sort-kind="numeric" data-col-idx="8">PEG<span class="sort-arrow">↕</span></th>
+            <th class="fund-col numeric sortable" data-sort-kind="numeric" data-col-idx="9">Beta<span class="sort-arrow">↕</span></th>
           </tr>
         </thead>
         <tbody>
@@ -426,1520 +649,1520 @@
               <td class="ticker">AAOI</td>
               <td>Applied Optoelectronics</td>
               <td class="sector">Optical Devices</td>
-              <td class="numeric">$180.82</td>
-              <td class="numeric change-pos">
-                +1.55%
+              <td class="numeric" data-sort="203.5500030517578">$203.55</td>
+              <td class="numeric change-neg" data-sort="-0.08344697031546865">
+                -0.08%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="60.77496701810057">
                 
-                  <span class="rsi-cell ">57.77</span>
+                  <span class="rsi-cell ">60.77</span>
                 
               </td>
-              <td class="fund-col numeric">$14.5B</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">0.78</td>
-              <td class="fund-col numeric">3.76</td>
+              <td class="fund-col numeric" data-sort="16335021056">$16.3B</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="0.78">0.78</td>
+              <td class="fund-col numeric" data-sort="3.759">3.76</td>
             </tr>
           
             <tr class="" data-search="adbe adobe tech saas — enterprise software">
               <td class="ticker">ADBE</td>
               <td>Adobe</td>
               <td class="sector">Tech SaaS — Enterprise Software</td>
-              <td class="numeric">$242.73</td>
-              <td class="numeric change-neg">
-                -1.17%
+              <td class="numeric" data-sort="237.02999877929688">$237.03</td>
+              <td class="numeric change-pos" data-sort="0.21554021047459618">
+                +0.22%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="39.488717242982">
                 
-                  <span class="rsi-cell ">42.55</span>
+                  <span class="rsi-cell ">39.49</span>
                 
               </td>
-              <td class="fund-col numeric">$98.1B</td>
-              <td class="fund-col numeric">14.1</td>
-              <td class="fund-col numeric">0.72</td>
-              <td class="fund-col numeric">1.42</td>
+              <td class="fund-col numeric" data-sort="95799443456">$95.8B</td>
+              <td class="fund-col numeric" data-sort="13.811771">13.8</td>
+              <td class="fund-col numeric" data-sort="0.68">0.68</td>
+              <td class="fund-col numeric" data-sort="1.417">1.42</td>
             </tr>
           
             <tr class="" data-search="adsk autodesk tech saas — vertical saas">
               <td class="ticker">ADSK</td>
               <td>Autodesk</td>
               <td class="sector">Tech SaaS — Vertical SaaS</td>
-              <td class="numeric">$238.49</td>
-              <td class="numeric change-pos">
-                +0.93%
+              <td class="numeric" data-sort="233.85000610351562">$233.85</td>
+              <td class="numeric change-pos" data-sort="0.11987788265477442">
+                +0.12%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="43.84224245138763">
                 
-                  <span class="rsi-cell ">46.04</span>
+                  <span class="rsi-cell ">43.84</span>
                 
               </td>
-              <td class="fund-col numeric">$50.4B</td>
-              <td class="fund-col numeric">45.5</td>
-              <td class="fund-col numeric">0.95</td>
-              <td class="fund-col numeric">1.32</td>
+              <td class="fund-col numeric" data-sort="49378426880">$49.4B</td>
+              <td class="fund-col numeric" data-sort="44.80077">44.8</td>
+              <td class="fund-col numeric" data-sort="0.92">0.92</td>
+              <td class="fund-col numeric" data-sort="1.322">1.32</td>
             </tr>
           
-            <tr class="" data-search="akam akamai tech saas — cloud infra / cdn">
+            <tr class="row-watch-overbought" data-search="akam akamai tech saas — cloud infra / cdn">
               <td class="ticker">AKAM</td>
               <td>Akamai</td>
               <td class="sector">Tech SaaS — Cloud Infra / CDN</td>
-              <td class="numeric">$144.95</td>
-              <td class="numeric change-neg">
-                -4.79%
+              <td class="numeric" data-sort="155.6699981689453">$155.67</td>
+              <td class="numeric change-pos" data-sort="1.0220947699571334">
+                +1.02%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="72.27394469351248">
                 
-                  <span class="rsi-cell ">72.56</span>
+                  <span class="rsi-cell watch-overbought">72.27</span>
                 
               </td>
-              <td class="fund-col numeric">$21.1B</td>
-              <td class="fund-col numeric">49.1</td>
-              <td class="fund-col numeric">1.70</td>
-              <td class="fund-col numeric">0.45</td>
+              <td class="fund-col numeric" data-sort="22632153088">$22.6B</td>
+              <td class="fund-col numeric" data-sort="52.591213">52.6</td>
+              <td class="fund-col numeric" data-sort="1.77">1.77</td>
+              <td class="fund-col numeric" data-sort="0.454">0.45</td>
             </tr>
           
             <tr class="" data-search="alab astera labs ai networking & interconnect">
               <td class="ticker">ALAB</td>
               <td>Astera Labs</td>
               <td class="sector">AI Networking & Interconnect</td>
-              <td class="numeric">$195.91</td>
-              <td class="numeric change-neg">
-                -4.78%
+              <td class="numeric" data-sort="228.63999938964844">$228.64</td>
+              <td class="numeric change-pos" data-sort="1.6742632082928015">
+                +1.67%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="66.96613562096125">
                 
-                  <span class="rsi-cell ">49.90</span>
+                  <span class="rsi-cell ">66.97</span>
                 
               </td>
-              <td class="fund-col numeric">$33.6B</td>
-              <td class="fund-col numeric">133.3</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">3.36</td>
+              <td class="fund-col numeric" data-sort="39190712320">$39.2B</td>
+              <td class="fund-col numeric" data-sort="154.48648">154.5</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="3.363">3.36</td>
             </tr>
           
             <tr class="" data-search="almu aeluma optical supporting components">
               <td class="ticker">ALMU</td>
               <td>Aeluma</td>
               <td class="sector">Optical Supporting Components</td>
-              <td class="numeric">$26.64</td>
-              <td class="numeric change-neg">
-                -7.03%
+              <td class="numeric" data-sort="26.639999389648438">$26.64</td>
+              <td class="numeric change-pos" data-sort="9.90098861877821">
+                +9.90%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="53.71698882137482">
                 
-                  <span class="rsi-cell ">58.89</span>
+                  <span class="rsi-cell ">53.72</span>
                 
               </td>
-              <td class="fund-col numeric">$481M</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">-0.09</td>
+              <td class="fund-col numeric" data-sort="481013984">$481M</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="-0.091">-0.09</td>
             </tr>
           
             <tr class="" data-search="amd advanced micro devices ai compute / gpus / accelerators">
               <td class="ticker">AMD</td>
               <td>Advanced Micro Devices</td>
               <td class="sector">AI Compute / GPUs / Accelerators</td>
-              <td class="numeric">$434.50</td>
-              <td class="numeric change-neg">
-                -6.61%
+              <td class="numeric" data-sort="449.6300048828125">$449.63</td>
+              <td class="numeric change-pos" data-sort="1.2406578911564439">
+                +1.24%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="69.2780081296513">
                 
-                  <span class="rsi-cell ">67.65</span>
+                  <span class="rsi-cell ">69.28</span>
                 
               </td>
-              <td class="fund-col numeric">$708.5B</td>
-              <td class="fund-col numeric">145.8</td>
-              <td class="fund-col numeric">1.10</td>
-              <td class="fund-col numeric">2.40</td>
+              <td class="fund-col numeric" data-sort="733281124352">$733.3B</td>
+              <td class="fund-col numeric" data-sort="150.90604">150.9</td>
+              <td class="fund-col numeric" data-sort="1.08">1.08</td>
+              <td class="fund-col numeric" data-sort="2.399">2.40</td>
             </tr>
           
             <tr class="" data-search="amzn amazon hyperscalers / cloud platforms">
               <td class="ticker">AMZN</td>
               <td>Amazon</td>
               <td class="sector">Hyperscalers / Cloud Platforms</td>
-              <td class="numeric">$264.67</td>
-              <td class="numeric change-neg">
-                -2.29%
+              <td class="numeric" data-sort="267.25">$267.25</td>
+              <td class="numeric change-neg" data-sort="-0.5544356212395266">
+                -0.55%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="52.38892443944551">
                 
-                  <span class="rsi-cell ">49.40</span>
+                  <span class="rsi-cell ">52.39</span>
                 
               </td>
-              <td class="fund-col numeric">$2.8T</td>
-              <td class="fund-col numeric">31.6</td>
-              <td class="fund-col numeric">1.89</td>
-              <td class="fund-col numeric">1.47</td>
+              <td class="fund-col numeric" data-sort="2874514866176">$2.9T</td>
+              <td class="fund-col numeric" data-sort="32.002396">32.0</td>
+              <td class="fund-col numeric" data-sort="1.85">1.85</td>
+              <td class="fund-col numeric" data-sort="1.468">1.47</td>
             </tr>
           
-            <tr class="row-watch" data-search="anet arista networks ai networking & interconnect">
+            <tr class="" data-search="anet arista networks ai networking & interconnect">
               <td class="ticker">ANET</td>
               <td>Arista Networks</td>
               <td class="sector">AI Networking & Interconnect</td>
-              <td class="numeric">$138.98</td>
-              <td class="numeric change-pos">
-                +1.88%
+              <td class="numeric" data-sort="147.77999877929688">$147.78</td>
+              <td class="numeric change-pos" data-sort="1.594934661314377">
+                +1.59%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="46.34416765467375">
                 
-                  <span class="rsi-cell watch">34.78</span>
+                  <span class="rsi-cell ">46.34</span>
                 
               </td>
-              <td class="fund-col numeric">$175.0B</td>
-              <td class="fund-col numeric">47.8</td>
-              <td class="fund-col numeric">1.82</td>
-              <td class="fund-col numeric">1.67</td>
+              <td class="fund-col numeric" data-sort="186117832704">$186.1B</td>
+              <td class="fund-col numeric" data-sort="50.79381">50.8</td>
+              <td class="fund-col numeric" data-sort="1.83">1.83</td>
+              <td class="fund-col numeric" data-sort="1.673">1.67</td>
             </tr>
           
-            <tr class="row-watch" data-search="aph amphenol ai networking & interconnect">
+            <tr class="" data-search="aph amphenol ai networking & interconnect">
               <td class="ticker">APH</td>
               <td>Amphenol</td>
               <td class="sector">AI Networking & Interconnect</td>
-              <td class="numeric">$125.14</td>
-              <td class="numeric change-pos">
-                +1.79%
+              <td class="numeric" data-sort="129.1699981689453">$129.17</td>
+              <td class="numeric change-pos" data-sort="1.9333940377534613">
+                +1.93%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="41.81655836931486">
                 
-                  <span class="rsi-cell watch">29.05</span>
+                  <span class="rsi-cell ">41.82</span>
                 
               </td>
-              <td class="fund-col numeric">$153.9B</td>
-              <td class="fund-col numeric">35.9</td>
-              <td class="fund-col numeric">1.10</td>
-              <td class="fund-col numeric">1.30</td>
+              <td class="fund-col numeric" data-sort="158933991424">$158.9B</td>
+              <td class="fund-col numeric" data-sort="37.12356">37.1</td>
+              <td class="fund-col numeric" data-sort="1.09">1.09</td>
+              <td class="fund-col numeric" data-sort="1.297">1.30</td>
             </tr>
           
             <tr class="" data-search="apld applied digital data center operators">
               <td class="ticker">APLD</td>
               <td>Applied Digital</td>
               <td class="sector">Data Center Operators</td>
-              <td class="numeric">$42.21</td>
-              <td class="numeric change-neg">
-                -9.05%
+              <td class="numeric" data-sort="46.720001220703125">$46.72</td>
+              <td class="numeric change-pos" data-sort="0.9287107224653457">
+                +0.93%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="68.4555046226714">
                 
-                  <span class="rsi-cell ">60.07</span>
+                  <span class="rsi-cell ">68.46</span>
                 
               </td>
-              <td class="fund-col numeric">$12.1B</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">1.83</td>
-              <td class="fund-col numeric">5.70</td>
+              <td class="fund-col numeric" data-sort="13348294656">$13.3B</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="1.83">1.83</td>
+              <td class="fund-col numeric" data-sort="5.7">5.70</td>
             </tr>
           
             <tr class="" data-search="avgo broadcom custom silicon / asics">
               <td class="ticker">AVGO</td>
               <td>Broadcom</td>
               <td class="sector">Custom Silicon / ASICs</td>
-              <td class="numeric">$412.88</td>
-              <td class="numeric change-neg">
-                -3.94%
+              <td class="numeric" data-sort="439.4599914550781">$439.46</td>
+              <td class="numeric change-pos" data-sort="1.3959040497102553">
+                +1.40%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="62.93786700603986">
                 
-                  <span class="rsi-cell ">48.75</span>
+                  <span class="rsi-cell ">62.94</span>
                 
               </td>
-              <td class="fund-col numeric">$2.0T</td>
-              <td class="fund-col numeric">80.3</td>
-              <td class="fund-col numeric">0.94</td>
-              <td class="fund-col numeric">1.44</td>
+              <td class="fund-col numeric" data-sort="2082259861504">$2.1T</td>
+              <td class="fund-col numeric" data-sort="85.72904">85.7</td>
+              <td class="fund-col numeric" data-sort="0.91">0.91</td>
+              <td class="fund-col numeric" data-sort="1.44">1.44</td>
             </tr>
           
             <tr class="" data-search="cdns cadence design systems ai eda & design tools">
               <td class="ticker">CDNS</td>
               <td>Cadence Design Systems</td>
               <td class="sector">AI EDA & Design Tools</td>
-              <td class="numeric">$357.54</td>
-              <td class="numeric change-neg">
-                -1.64%
+              <td class="numeric" data-sort="352.885009765625">$352.89</td>
+              <td class="numeric change-pos" data-sort="0.5742909557611225">
+                +0.57%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="56.72206492752906">
                 
-                  <span class="rsi-cell ">64.38</span>
+                  <span class="rsi-cell ">56.72</span>
                 
               </td>
-              <td class="fund-col numeric">$98.6B</td>
-              <td class="fund-col numeric">83.1</td>
-              <td class="fund-col numeric">3.44</td>
-              <td class="fund-col numeric">1.13</td>
+              <td class="fund-col numeric" data-sort="97318920192">$97.3B</td>
+              <td class="fund-col numeric" data-sort="82.247086">82.2</td>
+              <td class="fund-col numeric" data-sort="3.4">3.40</td>
+              <td class="fund-col numeric" data-sort="1.131">1.13</td>
             </tr>
           
-            <tr class="" data-search="ceg constellation energy ai energy">
+            <tr class="row-watch" data-search="ceg constellation energy ai energy">
               <td class="ticker">CEG</td>
               <td>Constellation Energy</td>
               <td class="sector">AI Energy</td>
-              <td class="numeric">$287.67</td>
-              <td class="numeric change-neg">
-                -2.84%
+              <td class="numeric" data-sort="275.239990234375">$275.24</td>
+              <td class="numeric change-neg" data-sort="-0.09982193326684445">
+                -0.10%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="31.0360768076186">
                 
-                  <span class="rsi-cell ">36.24</span>
+                  <span class="rsi-cell watch">31.04</span>
                 
               </td>
-              <td class="fund-col numeric">$104.2B</td>
-              <td class="fund-col numeric">25.0</td>
-              <td class="fund-col numeric">3.74</td>
-              <td class="fund-col numeric">1.16</td>
+              <td class="fund-col numeric" data-sort="99421175808">$99.4B</td>
+              <td class="fund-col numeric" data-sort="23.894096">23.9</td>
+              <td class="fund-col numeric" data-sort="3.74">3.74</td>
+              <td class="fund-col numeric" data-sort="1.155">1.16</td>
             </tr>
           
             <tr class="" data-search="cien ciena ai networking & interconnect">
               <td class="ticker">CIEN</td>
               <td>Ciena</td>
               <td class="sector">AI Networking & Interconnect</td>
-              <td class="numeric">$555.36</td>
-              <td class="numeric change-neg">
-                -5.37%
+              <td class="numeric" data-sort="591.5599975585938">$591.56</td>
+              <td class="numeric change-pos" data-sort="1.8175555178302498">
+                +1.82%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="62.728198260202454">
                 
-                  <span class="rsi-cell ">55.49</span>
+                  <span class="rsi-cell ">62.73</span>
                 
               </td>
-              <td class="fund-col numeric">$78.5B</td>
-              <td class="fund-col numeric">353.7</td>
-              <td class="fund-col numeric">2.29</td>
-              <td class="fund-col numeric">1.25</td>
+              <td class="fund-col numeric" data-sort="83647070208">$83.6B</td>
+              <td class="fund-col numeric" data-sort="379.21155">379.2</td>
+              <td class="fund-col numeric" data-sort="2.41">2.41</td>
+              <td class="fund-col numeric" data-sort="1.245">1.25</td>
             </tr>
           
             <tr class="" data-search="cme cme group fintech — exchanges & financial data">
               <td class="ticker">CME</td>
               <td>CME Group</td>
               <td class="sector">Fintech — Exchanges & Financial Data</td>
-              <td class="numeric">$286.35</td>
-              <td class="numeric change-pos">
-                +1.27%
+              <td class="numeric" data-sort="297.70001220703125">$297.70</td>
+              <td class="numeric change-neg" data-sort="-0.030221409485956266">
+                -0.03%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="66.84388270796131">
                 
-                  <span class="rsi-cell ">49.27</span>
+                  <span class="rsi-cell ">66.84</span>
                 
               </td>
-              <td class="fund-col numeric">$103.8B</td>
-              <td class="fund-col numeric">24.4</td>
-              <td class="fund-col numeric">4.76</td>
-              <td class="fund-col numeric">0.26</td>
+              <td class="fund-col numeric" data-sort="107874385920">$107.9B</td>
+              <td class="fund-col numeric" data-sort="25.422716">25.4</td>
+              <td class="fund-col numeric" data-sort="5.01">5.01</td>
+              <td class="fund-col numeric" data-sort="0.26">0.26</td>
             </tr>
           
             <tr class="" data-search="cohr coherent optical devices">
               <td class="ticker">COHR</td>
               <td>Coherent</td>
               <td class="sector">Optical Devices</td>
-              <td class="numeric">$358.00</td>
-              <td class="numeric change-neg">
-                -5.81%
+              <td class="numeric" data-sort="404.9150085449219">$404.92</td>
+              <td class="numeric change-pos" data-sort="0.8769465557852555">
+                +0.88%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="68.37586306139085">
                 
-                  <span class="rsi-cell ">58.78</span>
+                  <span class="rsi-cell ">68.38</span>
                 
               </td>
-              <td class="fund-col numeric">$70.0B</td>
-              <td class="fund-col numeric">171.3</td>
-              <td class="fund-col numeric">0.92</td>
-              <td class="fund-col numeric">2.05</td>
+              <td class="fund-col numeric" data-sort="79222185984">$79.2B</td>
+              <td class="fund-col numeric" data-sort="192.82858">192.8</td>
+              <td class="fund-col numeric" data-sort="0.92">0.92</td>
+              <td class="fund-col numeric" data-sort="2.053">2.05</td>
             </tr>
           
             <tr class="" data-search="coin coinbase fintech — digital brokers & neobanks">
               <td class="ticker">COIN</td>
               <td>Coinbase</td>
               <td class="sector">Fintech — Digital Brokers & Neobanks</td>
-              <td class="numeric">$204.55</td>
-              <td class="numeric change-neg">
-                -3.78%
+              <td class="numeric" data-sort="211.97000122070312">$211.97</td>
+              <td class="numeric change-neg" data-sort="-1.8293798544549524">
+                -1.83%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="58.1031414968446">
                 
-                  <span class="rsi-cell ">55.22</span>
+                  <span class="rsi-cell ">58.10</span>
                 
               </td>
-              <td class="fund-col numeric">$53.9B</td>
-              <td class="fund-col numeric">74.9</td>
-              <td class="fund-col numeric">0.77</td>
-              <td class="fund-col numeric">3.38</td>
+              <td class="fund-col numeric" data-sort="55856316416">$55.9B</td>
+              <td class="fund-col numeric" data-sort="77.94485">77.9</td>
+              <td class="fund-col numeric" data-sort="0.93">0.93</td>
+              <td class="fund-col numeric" data-sort="3.381">3.38</td>
             </tr>
           
             <tr class="" data-search="crdo credo ai networking & interconnect">
               <td class="ticker">CRDO</td>
               <td>Credo</td>
               <td class="sector">AI Networking & Interconnect</td>
-              <td class="numeric">$187.86</td>
-              <td class="numeric change-neg">
-                -9.37%
+              <td class="numeric" data-sort="184.3300018310547">$184.33</td>
+              <td class="numeric change-pos" data-sort="0.0157389047345043">
+                +0.02%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="49.24930037326463">
                 
-                  <span class="rsi-cell ">52.30</span>
+                  <span class="rsi-cell ">49.25</span>
                 
               </td>
-              <td class="fund-col numeric">$34.7B</td>
-              <td class="fund-col numeric">102.7</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">3.18</td>
+              <td class="fund-col numeric" data-sort="34038390784">$34.0B</td>
+              <td class="fund-col numeric" data-sort="101.3956">101.4</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="3.176">3.18</td>
             </tr>
           
             <tr class="" data-search="crm salesforce tech saas — enterprise software">
               <td class="ticker">CRM</td>
               <td>Salesforce</td>
               <td class="sector">Tech SaaS — Enterprise Software</td>
-              <td class="numeric">$173.81</td>
-              <td class="numeric change-neg">
-                -1.79%
+              <td class="numeric" data-sort="167.61000061035156">$167.61</td>
+              <td class="numeric change-pos" data-sort="0.005963309350815025">
+                +0.01%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="35.283175717018864">
                 
-                  <span class="rsi-cell ">39.08</span>
+                  <span class="rsi-cell ">35.28</span>
                 
               </td>
-              <td class="fund-col numeric">$142.2B</td>
-              <td class="fund-col numeric">22.3</td>
-              <td class="fund-col numeric">0.99</td>
-              <td class="fund-col numeric">1.14</td>
+              <td class="fund-col numeric" data-sort="137089449984">$137.1B</td>
+              <td class="fund-col numeric" data-sort="21.512196">21.5</td>
+              <td class="fund-col numeric" data-sort="0.93">0.93</td>
+              <td class="fund-col numeric" data-sort="1.139">1.14</td>
             </tr>
           
-            <tr class="" data-search="crwd crowdstrike tech saas — cybersecurity">
+            <tr class="row-overbought" data-search="crwd crowdstrike tech saas — cybersecurity">
               <td class="ticker">CRWD</td>
               <td>CrowdStrike</td>
               <td class="sector">Tech SaaS — Cybersecurity</td>
-              <td class="numeric">$544.45</td>
-              <td class="numeric change-pos">
-                +1.43%
+              <td class="numeric" data-sort="579.7899780273438">$579.79</td>
+              <td class="numeric change-pos" data-sort="0.7463965581570368">
+                +0.75%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="87.14152273948528">
                 
-                  <span class="rsi-cell ">82.49</span>
+                  <span class="rsi-cell overbought">87.14</span>
                 
               </td>
-              <td class="fund-col numeric">$138.6B</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">4.35</td>
-              <td class="fund-col numeric">1.06</td>
+              <td class="fund-col numeric" data-sort="147618463744">$147.6B</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="4.5">4.50</td>
+              <td class="fund-col numeric" data-sort="1.06">1.06</td>
             </tr>
           
             <tr class="" data-search="crwv coreweave data center operators">
               <td class="ticker">CRWV</td>
               <td>CoreWeave</td>
               <td class="sector">Data Center Operators</td>
-              <td class="numeric">$102.91</td>
-              <td class="numeric change-neg">
-                -10.46%
+              <td class="numeric" data-sort="114.2300033569336">$114.23</td>
+              <td class="numeric change-pos" data-sort="0.28972943514817134">
+                +0.29%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="48.26347913000924">
                 
-                  <span class="rsi-cell ">37.34</span>
+                  <span class="rsi-cell ">48.26</span>
                 
               </td>
-              <td class="fund-col numeric">$56.2B</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric" data-sort="62312316928">$62.3B</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="">—</td>
             </tr>
           
-            <tr class="" data-search="csco cisco ai networking & interconnect">
+            <tr class="row-overbought" data-search="csco cisco ai networking & interconnect">
               <td class="ticker">CSCO</td>
               <td>Cisco</td>
               <td class="sector">AI Networking & Interconnect</td>
-              <td class="numeric">$98.07</td>
-              <td class="numeric change-neg">
-                -0.37%
+              <td class="numeric" data-sort="115.54010009765625">$115.54</td>
+              <td class="numeric change-pos" data-sort="1.2621399148062076">
+                +1.26%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="90.72105595380278">
                 
-                  <span class="rsi-cell ">71.88</span>
+                  <span class="rsi-cell overbought">90.72</span>
                 
               </td>
-              <td class="fund-col numeric">$387.4B</td>
-              <td class="fund-col numeric">35.3</td>
-              <td class="fund-col numeric">1.49</td>
-              <td class="fund-col numeric">0.91</td>
+              <td class="fund-col numeric" data-sort="456331132928">$456.3B</td>
+              <td class="fund-col numeric" data-sort="41.557552">41.6</td>
+              <td class="fund-col numeric" data-sort="1.54">1.54</td>
+              <td class="fund-col numeric" data-sort="0.912">0.91</td>
             </tr>
           
-            <tr class="" data-search="ddog datadog tech saas — data & analytics">
+            <tr class="row-overbought" data-search="ddog datadog tech saas — data & analytics">
               <td class="ticker">DDOG</td>
               <td>Datadog</td>
               <td class="sector">Tech SaaS — Data & Analytics</td>
-              <td class="numeric">$197.83</td>
-              <td class="numeric change-neg">
-                -0.98%
+              <td class="numeric" data-sort="202.7899932861328">$202.79</td>
+              <td class="numeric change-pos" data-sort="0.23725754205500613">
+                +0.24%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="80.88746301202272">
                 
-                  <span class="rsi-cell ">83.65</span>
+                  <span class="rsi-cell overbought">80.89</span>
                 
               </td>
-              <td class="fund-col numeric">$70.4B</td>
-              <td class="fund-col numeric">520.6</td>
-              <td class="fund-col numeric">1.50</td>
-              <td class="fund-col numeric">1.29</td>
+              <td class="fund-col numeric" data-sort="72202960896">$72.2B</td>
+              <td class="fund-col numeric" data-sort="520.1026">520.1</td>
+              <td class="fund-col numeric" data-sort="1.25">1.25</td>
+              <td class="fund-col numeric" data-sort="1.295">1.29</td>
             </tr>
           
             <tr class="" data-search="dell dell technologies ai servers & systems">
               <td class="ticker">DELL</td>
               <td>Dell Technologies</td>
               <td class="sector">AI Servers & Systems</td>
-              <td class="numeric">$230.50</td>
-              <td class="numeric change-neg">
-                -6.36%
+              <td class="numeric" data-sort="247.8300018310547">$247.83</td>
+              <td class="numeric change-pos" data-sort="1.262562829343784">
+                +1.26%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="63.393743062494615">
                 
-                  <span class="rsi-cell ">54.13</span>
+                  <span class="rsi-cell ">63.39</span>
                 
               </td>
-              <td class="fund-col numeric">$149.8B</td>
-              <td class="fund-col numeric">26.6</td>
-              <td class="fund-col numeric">1.08</td>
-              <td class="fund-col numeric">1.06</td>
+              <td class="fund-col numeric" data-sort="161175289856">$161.2B</td>
+              <td class="fund-col numeric" data-sort="28.558754">28.6</td>
+              <td class="fund-col numeric" data-sort="0.99">0.99</td>
+              <td class="fund-col numeric" data-sort="1.062">1.06</td>
             </tr>
           
             <tr class="" data-search="dlr digital realty data center operators">
               <td class="ticker">DLR</td>
               <td>Digital Realty</td>
               <td class="sector">Data Center Operators</td>
-              <td class="numeric">$194.65</td>
-              <td class="numeric change-neg">
-                -1.00%
+              <td class="numeric" data-sort="192.85000610351562">$192.85</td>
+              <td class="numeric change-pos" data-sort="0.7365250961804248">
+                +0.74%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="42.976684442792966">
                 
-                  <span class="rsi-cell ">45.64</span>
+                  <span class="rsi-cell ">42.98</span>
                 
               </td>
-              <td class="fund-col numeric">$69.6B</td>
-              <td class="fund-col numeric">51.6</td>
-              <td class="fund-col numeric">13.17</td>
-              <td class="fund-col numeric">1.08</td>
+              <td class="fund-col numeric" data-sort="68978688000">$69.0B</td>
+              <td class="fund-col numeric" data-sort="51.15119">51.2</td>
+              <td class="fund-col numeric" data-sort="13.17">13.17</td>
+              <td class="fund-col numeric" data-sort="1.08">1.08</td>
             </tr>
           
             <tr class="" data-search="eqix equinix data center operators">
               <td class="ticker">EQIX</td>
               <td>Equinix</td>
               <td class="sector">Data Center Operators</td>
-              <td class="numeric">$1074.42</td>
-              <td class="numeric change-neg">
-                -1.57%
+              <td class="numeric" data-sort="1079.4100341796875">$1079.41</td>
+              <td class="numeric change-pos" data-sort="0.35609422650911327">
+                +0.36%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="50.53702491979583">
                 
-                  <span class="rsi-cell ">48.26</span>
+                  <span class="rsi-cell ">50.54</span>
                 
               </td>
-              <td class="fund-col numeric">$105.9B</td>
-              <td class="fund-col numeric">74.3</td>
-              <td class="fund-col numeric">3.52</td>
-              <td class="fund-col numeric">1.00</td>
+              <td class="fund-col numeric" data-sort="106482630656">$106.5B</td>
+              <td class="fund-col numeric" data-sort="74.77009">74.8</td>
+              <td class="fund-col numeric" data-sort="3.54">3.54</td>
+              <td class="fund-col numeric" data-sort="0.997">1.00</td>
             </tr>
           
             <tr class="row-watch" data-search="fis fidelity national is fintech — payment processors">
               <td class="ticker">FIS</td>
               <td>Fidelity National IS</td>
               <td class="sector">Fintech — Payment Processors</td>
-              <td class="numeric">$42.20</td>
-              <td class="numeric change-pos">
-                +0.14%
+              <td class="numeric" data-sort="41.810001373291016">$41.81</td>
+              <td class="numeric change-neg" data-sort="-1.3682425683144888">
+                -1.37%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="32.78976970738894">
                 
-                  <span class="rsi-cell watch">29.46</span>
+                  <span class="rsi-cell watch">32.79</span>
                 
               </td>
-              <td class="fund-col numeric">$21.8B</td>
-              <td class="fund-col numeric">8.2</td>
-              <td class="fund-col numeric">0.24</td>
-              <td class="fund-col numeric">0.83</td>
+              <td class="fund-col numeric" data-sort="21610717184">$21.6B</td>
+              <td class="fund-col numeric" data-sort="8.102714">8.1</td>
+              <td class="fund-col numeric" data-sort="0.24">0.24</td>
+              <td class="fund-col numeric" data-sort="0.83">0.83</td>
             </tr>
           
             <tr class="row-watch" data-search="fisv fiserv fintech — payment processors">
               <td class="ticker">FISV</td>
               <td>Fiserv</td>
               <td class="sector">Fintech — Payment Processors</td>
-              <td class="numeric">$54.35</td>
-              <td class="numeric change-neg">
-                -0.59%
+              <td class="numeric" data-sort="53.47999954223633">$53.48</td>
+              <td class="numeric change-pos" data-sort="0.0">
+                +0.00%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="33.31657331823814">
                 
-                  <span class="rsi-cell watch">28.98</span>
+                  <span class="rsi-cell watch">33.32</span>
                 
               </td>
-              <td class="fund-col numeric">$29.0B</td>
-              <td class="fund-col numeric">9.2</td>
-              <td class="fund-col numeric">0.91</td>
-              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric" data-sort="28507756544">$28.5B</td>
+              <td class="fund-col numeric" data-sort="9.061017">9.1</td>
+              <td class="fund-col numeric" data-sort="0.9089">0.91</td>
+              <td class="fund-col numeric" data-sort="">—</td>
             </tr>
           
             <tr class="" data-search="fn fabrinet optical supporting components">
               <td class="ticker">FN</td>
               <td>Fabrinet</td>
               <td class="sector">Optical Supporting Components</td>
-              <td class="numeric">$610.43</td>
-              <td class="numeric change-neg">
-                -8.20%
+              <td class="numeric" data-sort="747.280029296875">$747.28</td>
+              <td class="numeric change-pos" data-sort="6.545765359126417">
+                +6.55%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="63.95676722241871">
                 
-                  <span class="rsi-cell ">41.17</span>
+                  <span class="rsi-cell ">63.96</span>
                 
               </td>
-              <td class="fund-col numeric">$21.9B</td>
-              <td class="fund-col numeric">52.5</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">1.22</td>
+              <td class="fund-col numeric" data-sort="26745825280">$26.7B</td>
+              <td class="fund-col numeric" data-sort="64.240105">64.2</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="1.217">1.22</td>
             </tr>
           
-            <tr class="" data-search="ftnt fortinet tech saas — cybersecurity">
+            <tr class="row-overbought" data-search="ftnt fortinet tech saas — cybersecurity">
               <td class="ticker">FTNT</td>
               <td>Fortinet</td>
               <td class="sector">Tech SaaS — Cybersecurity</td>
-              <td class="numeric">$114.44</td>
-              <td class="numeric change-neg">
-                -0.07%
+              <td class="numeric" data-sort="121.87999725341797">$121.88</td>
+              <td class="numeric change-pos" data-sort="1.5751307803124104">
+                +1.58%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="88.31488349910882">
                 
-                  <span class="rsi-cell ">85.68</span>
+                  <span class="rsi-cell overbought">88.31</span>
                 
               </td>
-              <td class="fund-col numeric">$83.8B</td>
-              <td class="fund-col numeric">44.5</td>
-              <td class="fund-col numeric">2.56</td>
-              <td class="fund-col numeric">0.92</td>
+              <td class="fund-col numeric" data-sort="89280536576">$89.3B</td>
+              <td class="fund-col numeric" data-sort="47.23256">47.2</td>
+              <td class="fund-col numeric" data-sort="2.57">2.57</td>
+              <td class="fund-col numeric" data-sort="0.919">0.92</td>
             </tr>
           
             <tr class="" data-search="glxy galaxy digital data center operators">
               <td class="ticker">GLXY</td>
               <td>Galaxy Digital</td>
               <td class="sector">Data Center Operators</td>
-              <td class="numeric">$30.60</td>
-              <td class="numeric change-neg">
-                -4.05%
+              <td class="numeric" data-sort="32.02000045776367">$32.02</td>
+              <td class="numeric change-neg" data-sort="-0.713176875151405">
+                -0.71%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="64.8096841860075">
                 
-                  <span class="rsi-cell ">60.75</span>
+                  <span class="rsi-cell ">64.81</span>
                 
               </td>
-              <td class="fund-col numeric">$5.9B</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">3.65</td>
+              <td class="fund-col numeric" data-sort="12492399616">$12.5B</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="3.652">3.65</td>
             </tr>
           
             <tr class="" data-search="googl alphabet hyperscalers / cloud platforms">
               <td class="ticker">GOOGL</td>
               <td>Alphabet</td>
               <td class="sector">Hyperscalers / Cloud Platforms</td>
-              <td class="numeric">$387.28</td>
-              <td class="numeric change-neg">
-                -1.50%
+              <td class="numeric" data-sort="401.1199951171875">$401.12</td>
+              <td class="numeric change-pos" data-sort="0.06985300415501657">
+                +0.07%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="69.00900842740964">
                 
-                  <span class="rsi-cell ">62.71</span>
+                  <span class="rsi-cell ">69.01</span>
                 
               </td>
-              <td class="fund-col numeric">$4.7T</td>
-              <td class="fund-col numeric">29.6</td>
-              <td class="fund-col numeric">1.58</td>
-              <td class="fund-col numeric">1.27</td>
+              <td class="fund-col numeric" data-sort="4859141029888">$4.9T</td>
+              <td class="fund-col numeric" data-sort="30.546078">30.5</td>
+              <td class="fund-col numeric" data-sort="1.53">1.53</td>
+              <td class="fund-col numeric" data-sort="1.267">1.27</td>
             </tr>
           
             <tr class="" data-search="gpn global payments fintech — payment processors">
               <td class="ticker">GPN</td>
               <td>Global Payments</td>
               <td class="sector">Fintech — Payment Processors</td>
-              <td class="numeric">$68.71</td>
-              <td class="numeric change-neg">
-                -1.00%
+              <td class="numeric" data-sort="67.33999633789062">$67.34</td>
+              <td class="numeric change-neg" data-sort="-0.6344995226140016">
+                -0.63%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="40.93803113891027">
                 
-                  <span class="rsi-cell ">44.01</span>
+                  <span class="rsi-cell ">40.94</span>
                 
               </td>
-              <td class="fund-col numeric">$18.8B</td>
-              <td class="fund-col numeric">25.3</td>
-              <td class="fund-col numeric">0.20</td>
-              <td class="fund-col numeric">0.76</td>
+              <td class="fund-col numeric" data-sort="18417686528">$18.4B</td>
+              <td class="fund-col numeric" data-sort="24.753677">24.8</td>
+              <td class="fund-col numeric" data-sort="0.19">0.19</td>
+              <td class="fund-col numeric" data-sort="0.757">0.76</td>
             </tr>
           
             <tr class="" data-search="hood robinhood fintech — digital brokers & neobanks">
               <td class="ticker">HOOD</td>
               <td>Robinhood</td>
               <td class="sector">Fintech — Digital Brokers & Neobanks</td>
-              <td class="numeric">$77.01</td>
-              <td class="numeric change-neg">
-                -3.54%
+              <td class="numeric" data-sort="80.7300033569336">$80.73</td>
+              <td class="numeric change-pos" data-sort="0.29818051874007406">
+                +0.30%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="55.86718478897582">
                 
-                  <span class="rsi-cell ">47.46</span>
+                  <span class="rsi-cell ">55.87</span>
                 
               </td>
-              <td class="fund-col numeric">$69.4B</td>
-              <td class="fund-col numeric">37.4</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">2.29</td>
+              <td class="fund-col numeric" data-sort="72670756864">$72.7B</td>
+              <td class="fund-col numeric" data-sort="39.174755">39.2</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="2.294">2.29</td>
             </tr>
           
-            <tr class="" data-search="hpe hewlett packard enterprise ai servers & systems">
+            <tr class="row-overbought" data-search="hpe hewlett packard enterprise ai servers & systems">
               <td class="ticker">HPE</td>
               <td>Hewlett Packard Enterprise</td>
               <td class="sector">AI Servers & Systems</td>
-              <td class="numeric">$29.62</td>
-              <td class="numeric change-neg">
-                -3.85%
+              <td class="numeric" data-sort="34.119998931884766">$34.12</td>
+              <td class="numeric change-pos" data-sort="2.125109511270027">
+                +2.13%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="76.57587094968318">
                 
-                  <span class="rsi-cell ">54.04</span>
+                  <span class="rsi-cell overbought">76.58</span>
                 
               </td>
-              <td class="fund-col numeric">$39.3B</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">0.85</td>
-              <td class="fund-col numeric">1.29</td>
+              <td class="fund-col numeric" data-sort="45285531648">$45.3B</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="0.85">0.85</td>
+              <td class="fund-col numeric" data-sort="1.295">1.29</td>
             </tr>
           
             <tr class="row-watch" data-search="hubs hubspot tech saas — productivity">
               <td class="ticker">HUBS</td>
               <td>HubSpot</td>
               <td class="sector">Tech SaaS — Productivity</td>
-              <td class="numeric">$183.03</td>
-              <td class="numeric change-neg">
-                -3.78%
+              <td class="numeric" data-sort="183.4600067138672">$183.46</td>
+              <td class="numeric change-neg" data-sort="-0.01634899907286373">
+                -0.02%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="33.28782481758874">
                 
-                  <span class="rsi-cell watch">29.66</span>
+                  <span class="rsi-cell watch">33.29</span>
                 
               </td>
-              <td class="fund-col numeric">$9.4B</td>
-              <td class="fund-col numeric">96.9</td>
-              <td class="fund-col numeric">0.32</td>
-              <td class="fund-col numeric">1.23</td>
+              <td class="fund-col numeric" data-sort="9396407296">$9.4B</td>
+              <td class="fund-col numeric" data-sort="96.5579">96.6</td>
+              <td class="fund-col numeric" data-sort="0.29">0.29</td>
+              <td class="fund-col numeric" data-sort="1.229">1.23</td>
             </tr>
           
             <tr class="" data-search="ice intercontinental exchange fintech — exchanges & financial data">
               <td class="ticker">ICE</td>
               <td>Intercontinental Exchange</td>
               <td class="sector">Fintech — Exchanges & Financial Data</td>
-              <td class="numeric">$156.74</td>
-              <td class="numeric change-neg">
-                -0.14%
+              <td class="numeric" data-sort="155.6999969482422">$155.70</td>
+              <td class="numeric change-pos" data-sort="0.23175010868965168">
+                +0.23%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="47.548115862536044">
                 
-                  <span class="rsi-cell ">49.79</span>
+                  <span class="rsi-cell ">47.55</span>
                 
               </td>
-              <td class="fund-col numeric">$88.6B</td>
-              <td class="fund-col numeric">22.8</td>
-              <td class="fund-col numeric">2.16</td>
-              <td class="fund-col numeric">0.96</td>
+              <td class="fund-col numeric" data-sort="88061607936">$88.1B</td>
+              <td class="fund-col numeric" data-sort="22.666668">22.7</td>
+              <td class="fund-col numeric" data-sort="2.23">2.23</td>
+              <td class="fund-col numeric" data-sort="0.964">0.96</td>
             </tr>
           
             <tr class="" data-search="intc intel ai compute / gpus / accelerators">
               <td class="ticker">INTC</td>
               <td>Intel</td>
               <td class="sector">AI Compute / GPUs / Accelerators</td>
-              <td class="numeric">$117.60</td>
-              <td class="numeric change-neg">
-                -6.77%
+              <td class="numeric" data-sort="115.8499984741211">$115.85</td>
+              <td class="numeric change-pos" data-sort="0.7259914697246068">
+                +0.73%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="59.32112188846322">
                 
-                  <span class="rsi-cell ">64.95</span>
+                  <span class="rsi-cell ">59.32</span>
                 
               </td>
-              <td class="fund-col numeric">$591.1B</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">1.36</td>
-              <td class="fund-col numeric">2.19</td>
+              <td class="fund-col numeric" data-sort="582664192000">$582.7B</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="1.36">1.36</td>
+              <td class="fund-col numeric" data-sort="2.19">2.19</td>
             </tr>
           
             <tr class="" data-search="intu intuit tech saas — enterprise software">
               <td class="ticker">INTU</td>
               <td>Intuit</td>
               <td class="sector">Tech SaaS — Enterprise Software</td>
-              <td class="numeric">$390.33</td>
-              <td class="numeric change-pos">
-                +0.01%
+              <td class="numeric" data-sort="378.2900085449219">$378.29</td>
+              <td class="numeric change-neg" data-sort="-0.8673997656320414">
+                -0.87%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="42.53723375603011">
                 
-                  <span class="rsi-cell ">46.34</span>
+                  <span class="rsi-cell ">42.54</span>
                 
               </td>
-              <td class="fund-col numeric">$108.6B</td>
-              <td class="fund-col numeric">25.4</td>
-              <td class="fund-col numeric">1.02</td>
-              <td class="fund-col numeric">1.03</td>
+              <td class="fund-col numeric" data-sort="105268305920">$105.3B</td>
+              <td class="fund-col numeric" data-sort="24.6443">24.6</td>
+              <td class="fund-col numeric" data-sort="1.0">1.00</td>
+              <td class="fund-col numeric" data-sort="1.035">1.03</td>
             </tr>
           
             <tr class="" data-search="iren iris energy ai energy">
               <td class="ticker">IREN</td>
               <td>Iris Energy</td>
               <td class="sector">AI Energy</td>
-              <td class="numeric">$54.40</td>
-              <td class="numeric change-neg">
-                -10.57%
+              <td class="numeric" data-sort="58.36000061035156">$58.36</td>
+              <td class="numeric change-pos" data-sort="1.5663096766775142">
+                +1.57%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="60.17386816363161">
                 
-                  <span class="rsi-cell ">53.62</span>
+                  <span class="rsi-cell ">60.17</span>
                 
               </td>
-              <td class="fund-col numeric">$19.4B</td>
-              <td class="fund-col numeric">70.6</td>
-              <td class="fund-col numeric">3.11</td>
-              <td class="fund-col numeric">4.18</td>
+              <td class="fund-col numeric" data-sort="20870916096">$20.9B</td>
+              <td class="fund-col numeric" data-sort="75.84416">75.8</td>
+              <td class="fund-col numeric" data-sort="3.11">3.11</td>
+              <td class="fund-col numeric" data-sort="4.179">4.18</td>
             </tr>
           
             <tr class="" data-search="lasr nlight optical devices">
               <td class="ticker">LASR</td>
               <td>nLight</td>
               <td class="sector">Optical Devices</td>
-              <td class="numeric">$78.25</td>
-              <td class="numeric change-neg">
-                -6.06%
+              <td class="numeric" data-sort="81.38999938964844">$81.39</td>
+              <td class="numeric change-pos" data-sort="2.2102250369661087">
+                +2.21%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="59.92496773400907">
                 
-                  <span class="rsi-cell ">59.03</span>
+                  <span class="rsi-cell ">59.92</span>
                 
               </td>
-              <td class="fund-col numeric">$4.4B</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">1.78</td>
-              <td class="fund-col numeric">2.33</td>
+              <td class="fund-col numeric" data-sort="4587720192">$4.6B</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="1.78">1.78</td>
+              <td class="fund-col numeric" data-sort="2.335">2.33</td>
             </tr>
           
             <tr class="" data-search="lite lumentum optical devices">
               <td class="ticker">LITE</td>
               <td>Lumentum</td>
               <td class="sector">Optical Devices</td>
-              <td class="numeric">$963.72</td>
-              <td class="numeric change-neg">
-                -8.53%
+              <td class="numeric" data-sort="1002.3300170898438">$1002.33</td>
+              <td class="numeric change-pos" data-sort="0.3971520329992666">
+                +0.40%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="55.49639878069316">
                 
-                  <span class="rsi-cell ">53.68</span>
+                  <span class="rsi-cell ">55.50</span>
                 
               </td>
-              <td class="fund-col numeric">$75.0B</td>
-              <td class="fund-col numeric">169.5</td>
-              <td class="fund-col numeric">0.63</td>
-              <td class="fund-col numeric">1.53</td>
+              <td class="fund-col numeric" data-sort="77940817920">$77.9B</td>
+              <td class="fund-col numeric" data-sort="176.68607">176.7</td>
+              <td class="fund-col numeric" data-sort="0.63">0.63</td>
+              <td class="fund-col numeric" data-sort="1.533">1.53</td>
             </tr>
           
             <tr class="" data-search="lpth lightpath optical supporting components">
               <td class="ticker">LPTH</td>
               <td>LightPath</td>
               <td class="sector">Optical Supporting Components</td>
-              <td class="numeric">$11.65</td>
-              <td class="numeric change-neg">
-                -7.94%
+              <td class="numeric" data-sort="12.159500122070312">$12.16</td>
+              <td class="numeric change-pos" data-sort="0.9087131087320873">
+                +0.91%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="47.29381043617386">
                 
-                  <span class="rsi-cell ">43.95</span>
+                  <span class="rsi-cell ">47.29</span>
                 
               </td>
-              <td class="fund-col numeric">$732M</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">1.54</td>
-              <td class="fund-col numeric">—</td>
+              <td class="fund-col numeric" data-sort="762891264">$763M</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="1.54">1.54</td>
+              <td class="fund-col numeric" data-sort="">—</td>
             </tr>
           
-            <tr class="row-watch" data-search="meta meta platforms hyperscalers / cloud platforms">
+            <tr class="" data-search="meta meta platforms hyperscalers / cloud platforms">
               <td class="ticker">META</td>
               <td>Meta Platforms</td>
               <td class="sector">Hyperscalers / Cloud Platforms</td>
-              <td class="numeric">$599.84</td>
-              <td class="numeric change-neg">
-                -0.24%
+              <td class="numeric" data-sort="618.4299926757812">$618.43</td>
+              <td class="numeric change-neg" data-sort="-0.11467874081106152">
+                -0.11%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="48.5367976575599">
                 
-                  <span class="rsi-cell watch">34.12</span>
+                  <span class="rsi-cell ">48.54</span>
                 
               </td>
-              <td class="fund-col numeric">$1.5T</td>
-              <td class="fund-col numeric">21.8</td>
-              <td class="fund-col numeric">0.89</td>
-              <td class="fund-col numeric">1.24</td>
+              <td class="fund-col numeric" data-sort="1569837154304">$1.6T</td>
+              <td class="fund-col numeric" data-sort="22.488363">22.5</td>
+              <td class="fund-col numeric" data-sort="0.88">0.88</td>
+              <td class="fund-col numeric" data-sort="1.243">1.24</td>
             </tr>
           
             <tr class="" data-search="mod modine manufacturing power, cooling & physical infrastructure">
               <td class="ticker">MOD</td>
               <td>Modine Manufacturing</td>
               <td class="sector">Power, Cooling & Physical Infrastructure</td>
-              <td class="numeric">$269.68</td>
-              <td class="numeric change-neg">
-                -5.39%
+              <td class="numeric" data-sort="292.5400085449219">$292.54</td>
+              <td class="numeric change-pos" data-sort="1.0343797952973557">
+                +1.03%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="64.74548339131175">
                 
-                  <span class="rsi-cell ">54.36</span>
+                  <span class="rsi-cell ">64.75</span>
                 
               </td>
-              <td class="fund-col numeric">$14.2B</td>
-              <td class="fund-col numeric">148.2</td>
-              <td class="fund-col numeric">1.12</td>
-              <td class="fund-col numeric">1.66</td>
+              <td class="fund-col numeric" data-sort="15405946880">$15.4B</td>
+              <td class="fund-col numeric" data-sort="158.78261">158.8</td>
+              <td class="fund-col numeric" data-sort="1.13">1.13</td>
+              <td class="fund-col numeric" data-sort="1.657">1.66</td>
             </tr>
           
             <tr class="" data-search="mrvl marvell custom silicon / asics">
               <td class="ticker">MRVL</td>
               <td>Marvell</td>
               <td class="sector">Custom Silicon / ASICs</td>
-              <td class="numeric">$159.85</td>
-              <td class="numeric change-neg">
-                -6.71%
+              <td class="numeric" data-sort="182.4199981689453">$182.42</td>
+              <td class="numeric change-pos" data-sort="1.00774751047711">
+                +1.01%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="66.95398421012007">
                 
-                  <span class="rsi-cell ">48.97</span>
+                  <span class="rsi-cell ">66.95</span>
                 
               </td>
-              <td class="fund-col numeric">$139.7B</td>
-              <td class="fund-col numeric">51.9</td>
-              <td class="fund-col numeric">2.00</td>
-              <td class="fund-col numeric">2.25</td>
+              <td class="fund-col numeric" data-sort="159658590208">$159.7B</td>
+              <td class="fund-col numeric" data-sort="59.279224">59.3</td>
+              <td class="fund-col numeric" data-sort="1.93">1.93</td>
+              <td class="fund-col numeric" data-sort="2.251">2.25</td>
             </tr>
           
             <tr class="" data-search="msft microsoft hyperscalers / cloud platforms">
               <td class="ticker">MSFT</td>
               <td>Microsoft</td>
               <td class="sector">Hyperscalers / Cloud Platforms</td>
-              <td class="numeric">$408.37</td>
-              <td class="numeric change-neg">
-                -0.18%
+              <td class="numeric" data-sort="409.4700012207031">$409.47</td>
+              <td class="numeric change-pos" data-sort="0.0953618610744118">
+                +0.10%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="47.35545617716489">
                 
-                  <span class="rsi-cell ">44.62</span>
+                  <span class="rsi-cell ">47.36</span>
                 
               </td>
-              <td class="fund-col numeric">$3.0T</td>
-              <td class="fund-col numeric">24.3</td>
-              <td class="fund-col numeric">1.29</td>
-              <td class="fund-col numeric">1.09</td>
+              <td class="fund-col numeric" data-sort="3041424048128">$3.0T</td>
+              <td class="fund-col numeric" data-sort="24.39988">24.4</td>
+              <td class="fund-col numeric" data-sort="1.26">1.26</td>
+              <td class="fund-col numeric" data-sort="1.093">1.09</td>
             </tr>
           
-            <tr class="" data-search="mtsi macom optical supporting components">
+            <tr class="row-overbought" data-search="mtsi macom optical supporting components">
               <td class="ticker">MTSI</td>
               <td>MACOM</td>
               <td class="sector">Optical Supporting Components</td>
-              <td class="numeric">$344.80</td>
-              <td class="numeric change-neg">
-                -3.69%
+              <td class="numeric" data-sort="383.6400146484375">$383.64</td>
+              <td class="numeric change-pos" data-sort="2.2004394635254054">
+                +2.20%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="75.21497257344431">
                 
-                  <span class="rsi-cell ">67.31</span>
+                  <span class="rsi-cell overbought">75.21</span>
                 
               </td>
-              <td class="fund-col numeric">$26.3B</td>
-              <td class="fund-col numeric">147.4</td>
-              <td class="fund-col numeric">2.05</td>
-              <td class="fund-col numeric">1.60</td>
+              <td class="fund-col numeric" data-sort="29264007168">$29.3B</td>
+              <td class="fund-col numeric" data-sort="161.83968">161.8</td>
+              <td class="fund-col numeric" data-sort="2.05">2.05</td>
+              <td class="fund-col numeric" data-sort="1.599">1.60</td>
             </tr>
           
             <tr class="" data-search="mu micron technology ai memory & storage">
               <td class="ticker">MU</td>
               <td>Micron Technology</td>
               <td class="sector">AI Memory & Storage</td>
-              <td class="numeric">$725.54</td>
-              <td class="numeric change-neg">
-                -9.70%
+              <td class="numeric" data-sort="775.9249877929688">$775.92</td>
+              <td class="numeric change-neg" data-sort="-1.1749393535303219">
+                -1.17%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="68.12661578862014">
                 
-                  <span class="rsi-cell ">67.07</span>
+                  <span class="rsi-cell ">68.13</span>
                 
               </td>
-              <td class="fund-col numeric">$818.0B</td>
-              <td class="fund-col numeric">34.3</td>
-              <td class="fund-col numeric">0.26</td>
-              <td class="fund-col numeric">1.92</td>
+              <td class="fund-col numeric" data-sort="875132878848">$875.1B</td>
+              <td class="fund-col numeric" data-sort="36.569748">36.6</td>
+              <td class="fund-col numeric" data-sort="0.26">0.26</td>
+              <td class="fund-col numeric" data-sort="1.919">1.92</td>
             </tr>
           
             <tr class="" data-search="nbis nebius group data center operators">
               <td class="ticker">NBIS</td>
               <td>Nebius Group</td>
               <td class="sector">Data Center Operators</td>
-              <td class="numeric">$174.10</td>
-              <td class="numeric change-neg">
-                -8.00%
+              <td class="numeric" data-sort="221.0500030517578">$221.05</td>
+              <td class="numeric change-neg" data-sort="-2.20756962599022">
+                -2.21%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="69.33158914240964">
                 
-                  <span class="rsi-cell ">53.92</span>
+                  <span class="rsi-cell ">69.33</span>
                 
               </td>
-              <td class="fund-col numeric">$44.2B</td>
-              <td class="fund-col numeric">4352.0</td>
-              <td class="fund-col numeric">0.63</td>
-              <td class="fund-col numeric">1.24</td>
+              <td class="fund-col numeric" data-sort="56149581824">$56.1B</td>
+              <td class="fund-col numeric" data-sort="85.3861">85.4</td>
+              <td class="fund-col numeric" data-sort="0.63">0.63</td>
+              <td class="fund-col numeric" data-sort="">—</td>
             </tr>
           
             <tr class="" data-search="ndaq nasdaq fintech — exchanges & financial data">
               <td class="ticker">NDAQ</td>
               <td>Nasdaq</td>
               <td class="sector">Fintech — Exchanges & Financial Data</td>
-              <td class="numeric">$89.61</td>
-              <td class="numeric change-pos">
-                +1.53%
+              <td class="numeric" data-sort="90.94999694824219">$90.95</td>
+              <td class="numeric change-neg" data-sort="-0.6553862190222008">
+                -0.66%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="58.09809105164812">
                 
-                  <span class="rsi-cell ">52.42</span>
+                  <span class="rsi-cell ">58.10</span>
                 
               </td>
-              <td class="fund-col numeric">$50.7B</td>
-              <td class="fund-col numeric">27.0</td>
-              <td class="fund-col numeric">2.31</td>
-              <td class="fund-col numeric">0.99</td>
+              <td class="fund-col numeric" data-sort="51424624640">$51.4B</td>
+              <td class="fund-col numeric" data-sort="27.388556">27.4</td>
+              <td class="fund-col numeric" data-sort="2.18">2.18</td>
+              <td class="fund-col numeric" data-sort="0.99">0.99</td>
             </tr>
           
             <tr class="" data-search="net cloudflare tech saas — cybersecurity">
               <td class="ticker">NET</td>
               <td>Cloudflare</td>
               <td class="sector">Tech SaaS — Cybersecurity</td>
-              <td class="numeric">$189.71</td>
-              <td class="numeric change-neg">
-                -2.12%
+              <td class="numeric" data-sort="199.75999450683594">$199.76</td>
+              <td class="numeric change-pos" data-sort="0.8786941707065624">
+                +0.88%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="44.31803019077415">
                 
-                  <span class="rsi-cell ">35.58</span>
+                  <span class="rsi-cell ">44.32</span>
                 
               </td>
-              <td class="fund-col numeric">$67.0B</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">2.38</td>
-              <td class="fund-col numeric">1.67</td>
+              <td class="fund-col numeric" data-sort="70626091008">$70.6B</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="2.38">2.38</td>
+              <td class="fund-col numeric" data-sort="1.673">1.67</td>
             </tr>
           
             <tr class="" data-search="nflx netflix consumer internet — streaming">
               <td class="ticker">NFLX</td>
               <td>Netflix</td>
               <td class="sector">Consumer Internet — Streaming</td>
-              <td class="numeric">$88.64</td>
-              <td class="numeric change-pos">
-                +3.90%
+              <td class="numeric" data-sort="86.94000244140625">$86.94</td>
+              <td class="numeric change-neg" data-sort="-1.0247036100091562">
+                -1.02%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="36.5621771893156">
                 
-                  <span class="rsi-cell ">42.50</span>
+                  <span class="rsi-cell ">36.56</span>
                 
               </td>
-              <td class="fund-col numeric">$373.2B</td>
-              <td class="fund-col numeric">28.6</td>
-              <td class="fund-col numeric">1.28</td>
-              <td class="fund-col numeric">1.55</td>
+              <td class="fund-col numeric" data-sort="366086848512">$366.1B</td>
+              <td class="fund-col numeric" data-sort="28.045162">28.0</td>
+              <td class="fund-col numeric" data-sort="1.28">1.28</td>
+              <td class="fund-col numeric" data-sort="1.548">1.55</td>
             </tr>
           
             <tr class="" data-search="nok nokia / infinera ai networking & interconnect">
               <td class="ticker">NOK</td>
               <td>Nokia / Infinera</td>
               <td class="sector">AI Networking & Interconnect</td>
-              <td class="numeric">$12.94</td>
-              <td class="numeric change-neg">
-                -6.91%
+              <td class="numeric" data-sort="14.456399917602539">$14.46</td>
+              <td class="numeric change-pos" data-sort="0.5662602963654891">
+                +0.57%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="65.69972721115664">
                 
-                  <span class="rsi-cell ">55.94</span>
+                  <span class="rsi-cell ">65.70</span>
                 
               </td>
-              <td class="fund-col numeric">$72.2B</td>
-              <td class="fund-col numeric">76.1</td>
-              <td class="fund-col numeric">1.21</td>
-              <td class="fund-col numeric">0.77</td>
+              <td class="fund-col numeric" data-sort="80723443712">$80.7B</td>
+              <td class="fund-col numeric" data-sort="90.375">90.4</td>
+              <td class="fund-col numeric" data-sort="1.24">1.24</td>
+              <td class="fund-col numeric" data-sort="0.765">0.77</td>
             </tr>
           
             <tr class="" data-search="now servicenow tech saas — enterprise software">
               <td class="ticker">NOW</td>
               <td>ServiceNow</td>
               <td class="sector">Tech SaaS — Enterprise Software</td>
-              <td class="numeric">$89.72</td>
-              <td class="numeric change-neg">
-                -1.16%
+              <td class="numeric" data-sort="90.5199966430664">$90.52</td>
+              <td class="numeric change-neg" data-sort="-0.41804716879384646">
+                -0.42%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="49.24845582003193">
                 
-                  <span class="rsi-cell ">45.08</span>
+                  <span class="rsi-cell ">49.25</span>
                 
               </td>
-              <td class="fund-col numeric">$92.5B</td>
-              <td class="fund-col numeric">53.4</td>
-              <td class="fund-col numeric">0.88</td>
-              <td class="fund-col numeric">0.82</td>
+              <td class="fund-col numeric" data-sort="93333372928">$93.3B</td>
+              <td class="fund-col numeric" data-sort="53.86905">53.9</td>
+              <td class="fund-col numeric" data-sort="0.86">0.86</td>
+              <td class="fund-col numeric" data-sort="0.819">0.82</td>
             </tr>
           
             <tr class="row-watch" data-search="nrg nrg energy ai energy">
               <td class="ticker">NRG</td>
               <td>NRG Energy</td>
               <td class="sector">AI Energy</td>
-              <td class="numeric">$135.09</td>
-              <td class="numeric change-neg">
-                -1.51%
+              <td class="numeric" data-sort="134.67999267578125">$134.68</td>
+              <td class="numeric change-pos" data-sort="2.699400108745343">
+                +2.70%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="33.66814325887846">
                 
-                  <span class="rsi-cell watch">27.81</span>
+                  <span class="rsi-cell watch">33.67</span>
                 
               </td>
-              <td class="fund-col numeric">$28.5B</td>
-              <td class="fund-col numeric">148.5</td>
-              <td class="fund-col numeric">1.23</td>
-              <td class="fund-col numeric">1.31</td>
+              <td class="fund-col numeric" data-sort="28424095744">$28.4B</td>
+              <td class="fund-col numeric" data-sort="149.68889">149.7</td>
+              <td class="fund-col numeric" data-sort="1.23">1.23</td>
+              <td class="fund-col numeric" data-sort="1.315">1.31</td>
             </tr>
           
-            <tr class="" data-search="nvda nvidia ai compute / gpus / accelerators">
+            <tr class="row-overbought" data-search="nvda nvidia ai compute / gpus / accelerators">
               <td class="ticker">NVDA</td>
               <td>Nvidia</td>
               <td class="sector">AI Compute / GPUs / Accelerators</td>
-              <td class="numeric">$217.43</td>
-              <td class="numeric change-neg">
-                -1.51%
+              <td class="numeric" data-sort="235.7449951171875">$235.74</td>
+              <td class="numeric change-pos" data-sort="0.6919359817138281">
+                +0.69%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="77.41860288312027">
                 
-                  <span class="rsi-cell ">64.93</span>
+                  <span class="rsi-cell overbought">77.42</span>
                 
               </td>
-              <td class="fund-col numeric">$5.3T</td>
-              <td class="fund-col numeric">44.4</td>
-              <td class="fund-col numeric">0.68</td>
-              <td class="fund-col numeric">2.24</td>
+              <td class="fund-col numeric" data-sort="5709746405376">$5.7T</td>
+              <td class="fund-col numeric" data-sort="48.110203">48.1</td>
+              <td class="fund-col numeric" data-sort="0.7">0.70</td>
+              <td class="fund-col numeric" data-sort="2.244">2.24</td>
             </tr>
           
             <tr class="" data-search="oklo oklo ai energy">
               <td class="ticker">OKLO</td>
               <td>Oklo</td>
               <td class="sector">AI Energy</td>
-              <td class="numeric">$71.40</td>
-              <td class="numeric change-neg">
-                -8.53%
+              <td class="numeric" data-sort="67.20999908447266">$67.21</td>
+              <td class="numeric change-pos" data-sort="1.6792747896751319">
+                +1.68%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="44.972464454687604">
                 
-                  <span class="rsi-cell ">50.58</span>
+                  <span class="rsi-cell ">44.97</span>
                 
               </td>
-              <td class="fund-col numeric">$12.4B</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">1.18</td>
+              <td class="fund-col numeric" data-sort="11693934592">$11.7B</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="1.181">1.18</td>
             </tr>
           
             <tr class="" data-search="optx syntec optics optical supporting components">
               <td class="ticker">OPTX</td>
               <td>Syntec Optics</td>
               <td class="sector">Optical Supporting Components</td>
-              <td class="numeric">$6.86</td>
-              <td class="numeric change-neg">
-                -12.44%
+              <td class="numeric" data-sort="7.650000095367432">$7.65</td>
+              <td class="numeric change-pos" data-sort="5.955683070239635">
+                +5.96%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="48.98494318375689">
                 
-                  <span class="rsi-cell ">38.10</span>
+                  <span class="rsi-cell ">48.98</span>
                 
               </td>
-              <td class="fund-col numeric">$286M</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">-0.92</td>
+              <td class="fund-col numeric" data-sort="318705280">$319M</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="-0.919">-0.92</td>
             </tr>
           
             <tr class="" data-search="orcl oracle hyperscalers / cloud platforms">
               <td class="ticker">ORCL</td>
               <td>Oracle</td>
               <td class="sector">Hyperscalers / Cloud Platforms</td>
-              <td class="numeric">$184.10</td>
-              <td class="numeric change-neg">
-                -4.62%
+              <td class="numeric" data-sort="195.6699981689453">$195.67</td>
+              <td class="numeric change-pos" data-sort="0.058809796462080045">
+                +0.06%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="63.74599676954508">
                 
-                  <span class="rsi-cell ">52.50</span>
+                  <span class="rsi-cell ">63.75</span>
                 
               </td>
-              <td class="fund-col numeric">$529.4B</td>
-              <td class="fund-col numeric">33.1</td>
-              <td class="fund-col numeric">1.24</td>
-              <td class="fund-col numeric">1.54</td>
+              <td class="fund-col numeric" data-sort="562583371776">$562.6B</td>
+              <td class="fund-col numeric" data-sort="35.055557">35.1</td>
+              <td class="fund-col numeric" data-sort="1.18">1.18</td>
+              <td class="fund-col numeric" data-sort="1.544">1.54</td>
             </tr>
           
-            <tr class="" data-search="panw palo alto networks tech saas — cybersecurity">
+            <tr class="row-overbought" data-search="panw palo alto networks tech saas — cybersecurity">
               <td class="ticker">PANW</td>
               <td>Palo Alto Networks</td>
               <td class="sector">Tech SaaS — Cybersecurity</td>
-              <td class="numeric">$214.78</td>
-              <td class="numeric change-pos">
-                +0.60%
+              <td class="numeric" data-sort="238.25">$238.25</td>
+              <td class="numeric change-pos" data-sort="1.7249447804629652">
+                +1.72%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="89.79578265078534">
                 
-                  <span class="rsi-cell ">82.24</span>
+                  <span class="rsi-cell overbought">89.80</span>
                 
               </td>
-              <td class="fund-col numeric">$174.2B</td>
-              <td class="fund-col numeric">120.0</td>
-              <td class="fund-col numeric">3.49</td>
-              <td class="fund-col numeric">0.77</td>
+              <td class="fund-col numeric" data-sort="193188315136">$193.2B</td>
+              <td class="fund-col numeric" data-sort="132.3389">132.3</td>
+              <td class="fund-col numeric" data-sort="3.62">3.62</td>
+              <td class="fund-col numeric" data-sort="0.77">0.77</td>
             </tr>
           
             <tr class="" data-search="pltr palantir tech saas — data & analytics">
               <td class="ticker">PLTR</td>
               <td>Palantir</td>
               <td class="sector">Tech SaaS — Data & Analytics</td>
-              <td class="numeric">$134.11</td>
-              <td class="numeric change-neg">
-                -0.74%
+              <td class="numeric" data-sort="133.74000549316406">$133.74</td>
+              <td class="numeric change-pos" data-sort="0.3526684217269486">
+                +0.35%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="44.30257466535339">
                 
-                  <span class="rsi-cell ">41.61</span>
+                  <span class="rsi-cell ">44.30</span>
                 
               </td>
-              <td class="fund-col numeric">$321.5B</td>
-              <td class="fund-col numeric">150.7</td>
-              <td class="fund-col numeric">2.05</td>
-              <td class="fund-col numeric">1.52</td>
+              <td class="fund-col numeric" data-sort="320592510976">$320.6B</td>
+              <td class="fund-col numeric" data-sort="151.96591">152.0</td>
+              <td class="fund-col numeric" data-sort="2.02">2.02</td>
+              <td class="fund-col numeric" data-sort="1.521">1.52</td>
             </tr>
           
-            <tr class="" data-search="poet poet technologies optical devices">
+            <tr class="row-overbought" data-search="poet poet technologies optical devices">
               <td class="ticker">POET</td>
               <td>POET Technologies</td>
               <td class="sector">Optical Devices</td>
-              <td class="numeric">$13.49</td>
-              <td class="numeric change-neg">
-                -3.54%
+              <td class="numeric" data-sort="20.56999969482422">$20.57</td>
+              <td class="numeric change-pos" data-sort="8.541934907270987">
+                +8.54%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="85.93287553283389">
                 
-                  <span class="rsi-cell ">70.18</span>
+                  <span class="rsi-cell overbought">85.93</span>
                 
               </td>
-              <td class="fund-col numeric">$2.1B</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">0.54</td>
+              <td class="fund-col numeric" data-sort="3141268992">$3.1B</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="0.543">0.54</td>
             </tr>
           
             <tr class="row-watch" data-search="pypl paypal fintech — payment processors">
               <td class="ticker">PYPL</td>
               <td>PayPal</td>
               <td class="sector">Fintech — Payment Processors</td>
-              <td class="numeric">$45.12</td>
-              <td class="numeric change-neg">
-                -0.11%
+              <td class="numeric" data-sort="45.04899978637695">$45.05</td>
+              <td class="numeric change-neg" data-sort="-0.4991755535839617">
+                -0.50%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="33.74200694917464">
                 
-                  <span class="rsi-cell watch">31.34</span>
+                  <span class="rsi-cell watch">33.74</span>
                 
               </td>
-              <td class="fund-col numeric">$39.8B</td>
-              <td class="fund-col numeric">8.5</td>
-              <td class="fund-col numeric">0.82</td>
-              <td class="fund-col numeric">1.40</td>
+              <td class="fund-col numeric" data-sort="39730032640">$39.7B</td>
+              <td class="fund-col numeric" data-sort="8.450282">8.5</td>
+              <td class="fund-col numeric" data-sort="0.83">0.83</td>
+              <td class="fund-col numeric" data-sort="1.395">1.40</td>
             </tr>
           
             <tr class="" data-search="schw charles schwab fintech — digital brokers & neobanks">
               <td class="ticker">SCHW</td>
               <td>Charles Schwab</td>
               <td class="sector">Fintech — Digital Brokers & Neobanks</td>
-              <td class="numeric">$89.66</td>
-              <td class="numeric change-pos">
-                +1.94%
+              <td class="numeric" data-sort="89.44999694824219">$89.45</td>
+              <td class="numeric change-neg" data-sort="-0.15626676567819775">
+                -0.16%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="44.10456546362995">
                 
-                  <span class="rsi-cell ">44.81</span>
+                  <span class="rsi-cell ">44.10</span>
                 
               </td>
-              <td class="fund-col numeric">$155.9B</td>
-              <td class="fund-col numeric">17.8</td>
-              <td class="fund-col numeric">1.13</td>
-              <td class="fund-col numeric">0.80</td>
+              <td class="fund-col numeric" data-sort="155548286976">$155.5B</td>
+              <td class="fund-col numeric" data-sort="17.781311">17.8</td>
+              <td class="fund-col numeric" data-sort="1.15">1.15</td>
+              <td class="fund-col numeric" data-sort="0.797">0.80</td>
             </tr>
           
             <tr class="" data-search="smci super micro computer ai servers & systems">
               <td class="ticker">SMCI</td>
               <td>Super Micro Computer</td>
               <td class="sector">AI Servers & Systems</td>
-              <td class="numeric">$31.45</td>
-              <td class="numeric change-neg">
-                -9.67%
+              <td class="numeric" data-sort="33.029998779296875">$33.03</td>
+              <td class="numeric change-pos" data-sort="1.5058323601205414">
+                +1.51%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="58.876970709750246">
                 
-                  <span class="rsi-cell ">53.77</span>
+                  <span class="rsi-cell ">58.88</span>
                 
               </td>
-              <td class="fund-col numeric">$18.9B</td>
-              <td class="fund-col numeric">16.6</td>
-              <td class="fund-col numeric">0.91</td>
-              <td class="fund-col numeric">1.68</td>
+              <td class="fund-col numeric" data-sort="19864852480">$19.9B</td>
+              <td class="fund-col numeric" data-sort="17.38421">17.4</td>
+              <td class="fund-col numeric" data-sort="0.91">0.91</td>
+              <td class="fund-col numeric" data-sort="1.684">1.68</td>
             </tr>
           
             <tr class="" data-search="snow snowflake tech saas — data & analytics">
               <td class="ticker">SNOW</td>
               <td>Snowflake</td>
               <td class="sector">Tech SaaS — Data & Analytics</td>
-              <td class="numeric">$151.48</td>
-              <td class="numeric change-pos">
-                +1.66%
+              <td class="numeric" data-sort="150.7899932861328">$150.79</td>
+              <td class="numeric change-pos" data-sort="0.5266621907552083">
+                +0.53%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="55.02564922396849">
                 
-                  <span class="rsi-cell ">57.36</span>
+                  <span class="rsi-cell ">55.03</span>
                 
               </td>
-              <td class="fund-col numeric">$52.4B</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">4.27</td>
-              <td class="fund-col numeric">1.08</td>
+              <td class="fund-col numeric" data-sort="52117729280">$52.1B</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="4.26">4.26</td>
+              <td class="fund-col numeric" data-sort="1.079">1.08</td>
             </tr>
           
             <tr class="" data-search="snps synopsys ai eda & design tools">
               <td class="ticker">SNPS</td>
               <td>Synopsys</td>
               <td class="sector">AI EDA & Design Tools</td>
-              <td class="numeric">$509.67</td>
-              <td class="numeric change-neg">
-                -1.05%
+              <td class="numeric" data-sort="510.05999755859375">$510.06</td>
+              <td class="numeric change-pos" data-sort="0.2604523465425908">
+                +0.26%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="60.49368899823768">
                 
-                  <span class="rsi-cell ">63.24</span>
+                  <span class="rsi-cell ">60.49</span>
                 
               </td>
-              <td class="fund-col numeric">$97.6B</td>
-              <td class="fund-col numeric">78.4</td>
-              <td class="fund-col numeric">3.41</td>
-              <td class="fund-col numeric">1.25</td>
+              <td class="fund-col numeric" data-sort="97700462592">$97.7B</td>
+              <td class="fund-col numeric" data-sort="78.22392">78.2</td>
+              <td class="fund-col numeric" data-sort="3.38">3.38</td>
+              <td class="fund-col numeric" data-sort="1.245">1.25</td>
             </tr>
           
             <tr class="" data-search="sofi sofi technologies fintech — digital brokers & neobanks">
               <td class="ticker">SOFI</td>
               <td>SoFi Technologies</td>
               <td class="sector">Fintech — Digital Brokers & Neobanks</td>
-              <td class="numeric">$15.71</td>
-              <td class="numeric change-neg">
-                -2.00%
+              <td class="numeric" data-sort="16.020000457763672">$16.02</td>
+              <td class="numeric change-pos" data-sort="2.103256126233174">
+                +2.10%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="46.46414445606832">
                 
-                  <span class="rsi-cell ">38.82</span>
+                  <span class="rsi-cell ">46.46</span>
                 
               </td>
-              <td class="fund-col numeric">$20.1B</td>
-              <td class="fund-col numeric">34.9</td>
-              <td class="fund-col numeric">0.98</td>
-              <td class="fund-col numeric">2.13</td>
+              <td class="fund-col numeric" data-sort="20549515264">$20.5B</td>
+              <td class="fund-col numeric" data-sort="35.600002">35.6</td>
+              <td class="fund-col numeric" data-sort="0.99">0.99</td>
+              <td class="fund-col numeric" data-sort="2.126">2.13</td>
             </tr>
           
             <tr class="" data-search="stx seagate technology ai memory & storage">
               <td class="ticker">STX</td>
               <td>Seagate Technology</td>
               <td class="sector">AI Memory & Storage</td>
-              <td class="numeric">$776.53</td>
-              <td class="numeric change-neg">
-                -7.07%
+              <td class="numeric" data-sort="804.9500122070312">$804.95</td>
+              <td class="numeric change-pos" data-sort="0.17796602959755325">
+                +0.18%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="65.16729146829996">
                 
-                  <span class="rsi-cell ">63.23</span>
+                  <span class="rsi-cell ">65.17</span>
                 
               </td>
-              <td class="fund-col numeric">$174.1B</td>
-              <td class="fund-col numeric">73.9</td>
-              <td class="fund-col numeric">0.54</td>
-              <td class="fund-col numeric">2.01</td>
+              <td class="fund-col numeric" data-sort="180450525184">$180.5B</td>
+              <td class="fund-col numeric" data-sort="76.35294">76.4</td>
+              <td class="fund-col numeric" data-sort="0.56">0.56</td>
+              <td class="fund-col numeric" data-sort="2.009">2.01</td>
             </tr>
           
             <tr class="" data-search="tsm tsmc chip foundry">
               <td class="ticker">TSM</td>
               <td>TSMC</td>
               <td class="sector">Chip Foundry</td>
-              <td class="numeric">$389.35</td>
-              <td class="numeric change-neg">
-                -3.89%
+              <td class="numeric" data-sort="417.760009765625">$417.76</td>
+              <td class="numeric change-pos" data-sort="0.6577864237182238">
+                +0.66%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="60.96201273964894">
                 
-                  <span class="rsi-cell ">44.41</span>
+                  <span class="rsi-cell ">60.96</span>
                 
               </td>
-              <td class="fund-col numeric">$2.0T</td>
-              <td class="fund-col numeric">33.2</td>
-              <td class="fund-col numeric">1.28</td>
-              <td class="fund-col numeric">1.26</td>
+              <td class="fund-col numeric" data-sort="2166463135744">$2.2T</td>
+              <td class="fund-col numeric" data-sort="35.672073">35.7</td>
+              <td class="fund-col numeric" data-sort="1.23">1.23</td>
+              <td class="fund-col numeric" data-sort="1.264">1.26</td>
             </tr>
           
             <tr class="" data-search="veev veeva systems tech saas — vertical saas">
               <td class="ticker">VEEV</td>
               <td>Veeva Systems</td>
               <td class="sector">Tech SaaS — Vertical SaaS</td>
-              <td class="numeric">$160.53</td>
-              <td class="numeric change-pos">
-                +0.54%
+              <td class="numeric" data-sort="156.3300018310547">$156.33</td>
+              <td class="numeric change-neg" data-sort="-0.09585499781425251">
+                -0.10%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="38.3560678982448">
                 
-                  <span class="rsi-cell ">42.71</span>
+                  <span class="rsi-cell ">38.36</span>
                 
               </td>
-              <td class="fund-col numeric">$26.2B</td>
-              <td class="fund-col numeric">29.6</td>
-              <td class="fund-col numeric">0.77</td>
-              <td class="fund-col numeric">0.92</td>
+              <td class="fund-col numeric" data-sort="25499797504">$25.5B</td>
+              <td class="fund-col numeric" data-sort="28.775324">28.8</td>
+              <td class="fund-col numeric" data-sort="0.74">0.74</td>
+              <td class="fund-col numeric" data-sort="0.924">0.92</td>
             </tr>
           
             <tr class="" data-search="viav viavi solutions optical supporting components">
               <td class="ticker">VIAV</td>
               <td>VIAVI Solutions</td>
               <td class="sector">Optical Supporting Components</td>
-              <td class="numeric">$51.80</td>
-              <td class="numeric change-neg">
-                -6.05%
+              <td class="numeric" data-sort="53.119998931884766">$53.12</td>
+              <td class="numeric change-pos" data-sort="1.412748852004096">
+                +1.41%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="55.78075284093334">
                 
-                  <span class="rsi-cell ">53.99</span>
+                  <span class="rsi-cell ">55.78</span>
                 
               </td>
-              <td class="fund-col numeric">$12.1B</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">1.34</td>
-              <td class="fund-col numeric">1.23</td>
+              <td class="fund-col numeric" data-sort="12422847488">$12.4B</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="1.34">1.34</td>
+              <td class="fund-col numeric" data-sort="1.233">1.23</td>
             </tr>
           
             <tr class="" data-search="vrt vertiv holdings power, cooling & physical infrastructure">
               <td class="ticker">VRT</td>
               <td>Vertiv Holdings</td>
               <td class="sector">Power, Cooling & Physical Infrastructure</td>
-              <td class="numeric">$353.86</td>
-              <td class="numeric change-neg">
-                -3.63%
+              <td class="numeric" data-sort="376.1700134277344">$376.17</td>
+              <td class="numeric change-pos" data-sort="1.2925164589649218">
+                +1.29%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="69.70539036546859">
                 
-                  <span class="rsi-cell ">60.31</span>
+                  <span class="rsi-cell ">69.71</span>
                 
               </td>
-              <td class="fund-col numeric">$136.0B</td>
-              <td class="fund-col numeric">89.2</td>
-              <td class="fund-col numeric">1.70</td>
-              <td class="fund-col numeric">2.10</td>
+              <td class="fund-col numeric" data-sort="144513253376">$144.5B</td>
+              <td class="fund-col numeric" data-sort="94.0575">94.1</td>
+              <td class="fund-col numeric" data-sort="1.84">1.84</td>
+              <td class="fund-col numeric" data-sort="2.099">2.10</td>
             </tr>
           
-            <tr class="" data-search="vst vistra energy ai energy">
+            <tr class="row-watch" data-search="vst vistra energy ai energy">
               <td class="ticker">VST</td>
               <td>Vistra Energy</td>
               <td class="sector">AI Energy</td>
-              <td class="numeric">$146.16</td>
-              <td class="numeric change-neg">
-                -2.48%
+              <td class="numeric" data-sort="141.88999938964844">$141.89</td>
+              <td class="numeric change-pos" data-sort="1.1837721690690854">
+                +1.18%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="33.078220681706895">
                 
-                  <span class="rsi-cell ">35.30</span>
+                  <span class="rsi-cell watch">33.08</span>
                 
               </td>
-              <td class="fund-col numeric">$49.3B</td>
-              <td class="fund-col numeric">24.4</td>
-              <td class="fund-col numeric">1.27</td>
-              <td class="fund-col numeric">1.45</td>
+              <td class="fund-col numeric" data-sort="47846191104">$47.8B</td>
+              <td class="fund-col numeric" data-sort="23.729095">23.7</td>
+              <td class="fund-col numeric" data-sort="1.26">1.26</td>
+              <td class="fund-col numeric" data-sort="1.447">1.45</td>
             </tr>
           
             <tr class="" data-search="wday workday tech saas — enterprise software">
               <td class="ticker">WDAY</td>
               <td>Workday</td>
               <td class="sector">Tech SaaS — Enterprise Software</td>
-              <td class="numeric">$120.83</td>
-              <td class="numeric change-neg">
-                -0.26%
+              <td class="numeric" data-sort="118.79000091552734">$118.79</td>
+              <td class="numeric change-neg" data-sort="-0.6854787964082815">
+                -0.69%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="44.96199190978045">
                 
-                  <span class="rsi-cell ">44.23</span>
+                  <span class="rsi-cell ">44.96</span>
                 
               </td>
-              <td class="fund-col numeric">$30.2B</td>
-              <td class="fund-col numeric">46.6</td>
-              <td class="fund-col numeric">0.49</td>
-              <td class="fund-col numeric">1.03</td>
+              <td class="fund-col numeric" data-sort="29650159616">$29.7B</td>
+              <td class="fund-col numeric" data-sort="45.849422">45.8</td>
+              <td class="fund-col numeric" data-sort="0.46">0.46</td>
+              <td class="fund-col numeric" data-sort="1.035">1.03</td>
             </tr>
           
             <tr class="" data-search="wdc western digital ai memory & storage">
               <td class="ticker">WDC</td>
               <td>Western Digital</td>
               <td class="sector">AI Memory & Storage</td>
-              <td class="numeric">$476.23</td>
-              <td class="numeric change-neg">
-                -8.53%
+              <td class="numeric" data-sort="489.1600036621094">$489.16</td>
+              <td class="numeric change-pos" data-sort="0.2233278672185554">
+                +0.22%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="60.482953502217285">
                 
-                  <span class="rsi-cell ">58.68</span>
+                  <span class="rsi-cell ">60.48</span>
                 
               </td>
-              <td class="fund-col numeric">$164.1B</td>
-              <td class="fund-col numeric">28.5</td>
-              <td class="fund-col numeric">0.43</td>
-              <td class="fund-col numeric">2.16</td>
+              <td class="fund-col numeric" data-sort="168601272320">$168.6B</td>
+              <td class="fund-col numeric" data-sort="29.290417">29.3</td>
+              <td class="fund-col numeric" data-sort="0.43">0.43</td>
+              <td class="fund-col numeric" data-sort="2.158">2.16</td>
             </tr>
           
             <tr class="" data-search="xyz block fintech — payment processors">
               <td class="ticker">XYZ</td>
               <td>Block</td>
               <td class="sector">Fintech — Payment Processors</td>
-              <td class="numeric">$72.00</td>
-              <td class="numeric change-neg">
-                -2.15%
+              <td class="numeric" data-sort="71.52999877929688">$71.53</td>
+              <td class="numeric change-pos" data-sort="0.5482139344875876">
+                +0.55%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="51.35538301560679">
                 
-                  <span class="rsi-cell ">52.67</span>
+                  <span class="rsi-cell ">51.36</span>
                 
               </td>
-              <td class="fund-col numeric">$42.9B</td>
-              <td class="fund-col numeric">56.2</td>
-              <td class="fund-col numeric">0.85</td>
-              <td class="fund-col numeric">2.57</td>
+              <td class="fund-col numeric" data-sort="42573295616">$42.6B</td>
+              <td class="fund-col numeric" data-sort="55.882812">55.9</td>
+              <td class="fund-col numeric" data-sort="0.81">0.81</td>
+              <td class="fund-col numeric" data-sort="2.57">2.57</td>
             </tr>
           
             <tr class="" data-search="zs zscaler tech saas — cybersecurity">
               <td class="ticker">ZS</td>
               <td>Zscaler</td>
               <td class="sector">Tech SaaS — Cybersecurity</td>
-              <td class="numeric">$147.36</td>
-              <td class="numeric change-neg">
-                -0.86%
+              <td class="numeric" data-sort="153.77000427246094">$153.77</td>
+              <td class="numeric change-pos" data-sort="0.03252865688312137">
+                +0.03%
               </td>
-              <td class="numeric">
+              <td class="numeric" data-sort="66.09762326036828">
                 
-                  <span class="rsi-cell ">58.64</span>
+                  <span class="rsi-cell ">66.10</span>
                 
               </td>
-              <td class="fund-col numeric">$23.7B</td>
-              <td class="fund-col numeric">—</td>
-              <td class="fund-col numeric">1.64</td>
-              <td class="fund-col numeric">0.96</td>
+              <td class="fund-col numeric" data-sort="24713531392">$24.7B</td>
+              <td class="fund-col numeric" data-sort="">—</td>
+              <td class="fund-col numeric" data-sort="1.57">1.57</td>
+              <td class="fund-col numeric" data-sort="0.962">0.96</td>
             </tr>
           
         </tbody>
@@ -1981,13 +2204,71 @@
             table.style.borderBottomRightRadius = '';
           }
         });
+
+        // Column sorting
+        var ARROW_UNSORTED = '↕', ARROW_ASC = '▲', ARROW_DESC = '▼';
+        var sortState = { col: null, dir: null };
+        var headers = table.querySelectorAll('thead th.sortable');
+        var tbody = table.querySelector('tbody');
+
+        function applySort() {
+          var rs = Array.from(tbody.querySelectorAll('tr'));
+          if (sortState.col === null) return;
+          var idx = sortState.col.idx;
+          var kind = sortState.col.kind;
+          var dir = sortState.dir;
+          rs.sort(function(a, b) {
+            var ca = a.cells[idx], cb = b.cells[idx];
+            if (kind === 'numeric') {
+              var ra = ca.getAttribute('data-sort');
+              var rb = cb.getAttribute('data-sort');
+              var va = (ra === null || ra === '') ? NaN : parseFloat(ra);
+              var vb = (rb === null || rb === '') ? NaN : parseFloat(rb);
+              var aNaN = isNaN(va), bNaN = isNaN(vb);
+              // Always push missing values to the bottom regardless of direction
+              if (aNaN && bNaN) return 0;
+              if (aNaN) return 1;
+              if (bNaN) return -1;
+              return dir === 'asc' ? va - vb : vb - va;
+            } else {
+              var sa = ca.textContent.trim().toLowerCase();
+              var sb = cb.textContent.trim().toLowerCase();
+              if (sa === sb) return 0;
+              return dir === 'asc' ? (sa < sb ? -1 : 1) : (sa > sb ? -1 : 1);
+            }
+          });
+          rs.forEach(function(r) { tbody.appendChild(r); });
+        }
+
+        headers.forEach(function(th) {
+          th.addEventListener('click', function() {
+            var idx = parseInt(th.getAttribute('data-col-idx'), 10);
+            var kind = th.getAttribute('data-sort-kind');
+            if (sortState.col && sortState.col.idx === idx) {
+              sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+              sortState.col = { idx: idx, kind: kind, th: th };
+              // Sensible default: numeric desc (largest first), text asc (A→Z)
+              sortState.dir = kind === 'numeric' ? 'desc' : 'asc';
+            }
+            headers.forEach(function(h) {
+              h.classList.remove('sort-asc', 'sort-desc');
+              var arr = h.querySelector('.sort-arrow');
+              if (arr) arr.textContent = ARROW_UNSORTED;
+            });
+            th.classList.add(sortState.dir === 'asc' ? 'sort-asc' : 'sort-desc');
+            var arrow = th.querySelector('.sort-arrow');
+            if (arrow) arrow.textContent = sortState.dir === 'asc' ? ARROW_ASC : ARROW_DESC;
+            applySort();
+          });
+        });
       })();
     </script>
   </section>
 
   <footer class="page">
     <div>
-      Generated 2026-05-12T16:02:36+00:00 &middot; Wilder RSI(14) on 4h closed bars &middot; TradingView convention (9:30 / 13:30 ET)
+      Generated 2026-05-14T20:24:31+00:00 &middot; Wilder RSI(14) on 4h closed bars &middot; TradingView convention (9:30 / 13:30 ET)
     </div>
     <div>
       Analysis model: <span class="mono">—</span> &middot; Data: yfinance

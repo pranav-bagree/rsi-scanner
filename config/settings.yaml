@@ -1,7 +1,9 @@
 rsi:
   period: 14
   oversold_threshold: 25
-  watch_threshold: 35       # surface in "approaching oversold" panel
+  watch_threshold: 35       # surface in "approaching oversold" panel (RSI between oversold and watch)
+  overbought_threshold: 75  # surface in "overbought" panel (RSI >= overbought)
+  approaching_overbought_threshold: 70  # surface in "approaching overbought" panel (RSI between approaching_overbought and overbought)
 
 prices:
   interval: 4h
