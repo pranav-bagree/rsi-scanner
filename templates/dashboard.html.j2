@@ -113,43 +113,51 @@
     .side-by-side { grid-template-columns: 1fr; }
   }
 
-  /* Unified compact signal card (used for both oversold and overbought) */
-  .signal-grid { display: grid; gap: 10px; }
+  /* Compact signal card — auto-fill grid fits 2 per row within each side-by-side column */
+  .signal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 6px;
+  }
   .signal-card {
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 10px; padding: 14px 16px;
-    display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center;
+    border-radius: 7px; padding: 8px 10px;
+    display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
   }
   .signal-card.oversold { border-left: 3px solid var(--buy); }
   .signal-card.overbought { border-left: 3px solid var(--sell); }
-  .signal-card .lhs .ticker { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
-  .signal-card .lhs .company { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-  .signal-card .lhs .sector-tag {
-    display: inline-block; font-size: 10.5px; padding: 2px 8px; border-radius: 999px;
-    background: var(--bg-card-soft); color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 0.04em; margin-top: 6px;
+  .signal-card .lhs { min-width: 0; }
+  .signal-card .lhs .ticker { font-weight: 700; font-size: 14px; letter-spacing: -0.01em; }
+  .signal-card .lhs .company {
+    font-size: 11px; color: var(--text-muted); margin-top: 1px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .signal-card .rhs { text-align: right; }
-  .signal-card .rsi-val { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .signal-card .rsi-val { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
   .signal-card.oversold .rsi-val { color: var(--buy); }
   .signal-card.overbought .rsi-val { color: var(--sell); }
-  .signal-card .rsi-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; letter-spacing: 0.04em; text-transform: uppercase; }
 
-  /* Approaching cards (watch list) */
+  /* Approaching cards (watch list) — same density as signal cards */
   .watch-grid {
-    display: grid; grid-template-columns: 1fr; gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 6px;
   }
   .watch-card {
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 10px; padding: 14px 16px;
-    display: flex; align-items: center; justify-content: space-between;
+    border-radius: 7px; padding: 8px 10px;
+    display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
   }
   .watch-card.approaching-oversold { border-left: 3px solid var(--buy-light); }
   .watch-card.approaching-overbought { border-left: 3px solid var(--sell-light); }
-  .watch-card .lhs .ticker { font-weight: 600; font-size: 15px; }
-  .watch-card .lhs .company { font-size: 12px; color: var(--text-muted); }
+  .watch-card .lhs { min-width: 0; }
+  .watch-card .lhs .ticker { font-weight: 600; font-size: 13.5px; }
+  .watch-card .lhs .company {
+    font-size: 11px; color: var(--text-muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
   .watch-card .rhs { text-align: right; }
-  .watch-card .rsi-val { font-size: 18px; font-weight: 600; }
+  .watch-card .rsi-val { font-size: 14.5px; font-weight: 600; }
   .watch-card.approaching-oversold .rsi-val { color: var(--buy-light); }
   .watch-card.approaching-overbought .rsi-val { color: var(--sell-light); }
 
@@ -327,11 +335,9 @@
               <div class="lhs">
                 <div class="ticker">{{ h.ticker }}</div>
                 <div class="company">{{ h.company }}</div>
-                <div class="sector-tag">{{ h.sector }}</div>
               </div>
               <div class="rhs">
                 <div class="rsi-val">{{ "%.2f"|format(h.rsi) }}</div>
-                <div class="rsi-sub">RSI(14)</div>
               </div>
             </div>
           {% endfor %}
@@ -358,11 +364,9 @@
               <div class="lhs">
                 <div class="ticker">{{ o.ticker }}</div>
                 <div class="company">{{ o.company }}</div>
-                <div class="sector-tag">{{ o.sector }}</div>
               </div>
               <div class="rhs">
                 <div class="rsi-val">{{ "%.2f"|format(o.rsi) }}</div>
-                <div class="rsi-sub">RSI(14)</div>
               </div>
             </div>
           {% endfor %}
