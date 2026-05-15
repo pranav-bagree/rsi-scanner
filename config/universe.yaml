@@ -1,5 +1,5 @@
-version: 2026-05-11
-description: Multi-theme universe — 80 tickers across 23 subcategories (AI infrastructure + Fintech + Tech SaaS + Consumer Internet; alphabetical within subcategory)
+version: 2026-05-14
+description: Multi-theme universe — 96 tickers across 26 subcategories (AI infrastructure + Fintech + Tech SaaS + Consumer Internet; alphabetical within subcategory)
 
 sectors:
   AI Compute / GPUs / Accelerators:
@@ -107,23 +107,45 @@ sectors:
     - { ticker: CRWD, name: CrowdStrike,                  note: "Endpoint + identity + cloud security; high beta post-2024 outage" }
     - { ticker: FTNT, name: Fortinet,                     note: "Firewall + SD-WAN + secure networking" }
     - { ticker: NET,  name: Cloudflare,                   note: "Edge platform + zero-trust + developer infra (4h RSI validation ticker)" }
+    - { ticker: OKTA, name: Okta,                         note: "Identity-as-a-service leader; very liquid LEAPS, deep chain" }
     - { ticker: PANW, name: Palo Alto Networks,           note: "Largest cyber pure-play; firewall + Prisma + Cortex" }
+    - { ticker: QLYS, name: Qualys,                       note: "Vulnerability management SaaS; ~$5B cap, wider monthly spreads" }
+    - { ticker: RBRK, name: Rubrik,                       note: "Data security / cyber resilience; post-IPO chain has built up" }
+    - { ticker: S,    name: SentinelOne,                  note: "Singularity XDR endpoint platform (Checkr stack); weeklies trade" }
+    - { ticker: TENB, name: Tenable,                      note: "Exposure management / vuln scanning; ~$5B, usable monthlies" }
     - { ticker: ZS,   name: Zscaler,                      note: "Zero-trust SASE; cloud-native security platform" }
 
   Tech SaaS — Data & Analytics:
     - { ticker: DDOG, name: Datadog,                      note: "Observability for cloud apps; AI-adjacent" }
+    - { ticker: DT,   name: Dynatrace,                    note: "APM / observability; direct DDOG competitor, monthlies liquid" }
     - { ticker: PLTR, name: Palantir,                     note: "Foundry + AIP; very high beta, frequent moves" }
     - { ticker: SNOW, name: Snowflake,                    note: "Data warehouse / cloud data platform; AI-adjacent" }
 
+  Tech SaaS — Database / Data Infra:
+    - { ticker: ESTC, name: Elastic NV,                   note: "Elasticsearch / observability + search; ~$10B, decent chain" }
+    - { ticker: MDB,  name: MongoDB,                      note: "Document database leader; very liquid weeklies + LEAPS, high IV" }
+
+  Tech SaaS — Dev Tools:
+    - { ticker: GTLB, name: GitLab,                       note: "End-to-end DevSecOps platform; ~$10B, monthlies fine" }
+    - { ticker: TEAM, name: Atlassian,                    note: "Jira + Confluence; ~$40B, very liquid options chain" }
+
   Tech SaaS — Vertical SaaS:
     - { ticker: ADSK, name: Autodesk,                     note: "AEC + manufacturing + media design SaaS" }
+    - { ticker: SHOP, name: Shopify,                      note: "Mega-cap commerce SaaS; weeklies + LEAPS both excellent" }
+    - { ticker: TOST, name: Toast,                        note: "Restaurant vertical SaaS; ~$15B" }
     - { ticker: VEEV, name: Veeva Systems,                note: "Life sciences vertical SaaS; CRM + content + quality" }
+
+  Tech SaaS — Adtech:
+    - { ticker: APP,  name: AppLovin,                     note: "Mobile ad platform; huge run, very liquid weeklies, very high IV" }
+    - { ticker: TTD,  name: The Trade Desk,               note: "Independent DSP; brutal 2025, LEAPS pricing interesting" }
 
   Tech SaaS — Cloud Infra / CDN:
     - { ticker: AKAM, name: Akamai,                       note: "Edge delivery + security platform" }
+    - { ticker: NTNX, name: Nutanix,                      note: "Hyperconverged / hybrid cloud infra software; ~$15B, good chain" }
 
   Tech SaaS — Productivity:
     - { ticker: HUBS, name: HubSpot,                      note: "Marketing + sales + service SaaS for SMB / mid-market" }
+    - { ticker: MNDY, name: Monday.com,                   note: "Work-management SaaS; ~$15B" }
 
   Consumer Internet — Streaming:
     - { ticker: NFLX, name: Netflix,                      note: "Global streaming subscription leader; ads tier + password-sharing crackdown driving growth" }
